@@ -1,4 +1,5 @@
 import numpy as np
+import heapq
 
 class Node:
     def __init__(self, position, parent=None):
@@ -46,11 +47,10 @@ def a_star(maze, start, goal):
     open_list = []
     closed_list = set()
 
-    open_list.append(start_node)
+    heapq.heappush(open_list, start_node)
 
     while open_list:
-        open_list.sort()
-        current_node = open_list.pop(0)
+        current_node = heapq.heappop(open_list)
         closed_list.add(current_node.position)
 
         if current_node == goal_node:
@@ -65,9 +65,14 @@ def a_star(maze, start, goal):
             neighbor.h = manhattan_distance(neighbor.position, goal_node.position)
             neighbor.f = neighbor.g + neighbor.h
 
-            if any(open_node for open_node in open_list if neighbor == open_node and neighbor.g > open_node.g):
+            skip = False
+            for open_node in open_list:
+                if neighbor == open_node and neighbor.g >= open_node.g:
+                    skip = True
+                    break
+            if skip:
                 continue
 
-            open_list.append(neighbor)
+            heapq.heappush(open_list, neighbor)
 
     return []  # No path found
