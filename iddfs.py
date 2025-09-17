@@ -1,34 +1,7 @@
 import numpy as np
-
-class Node:
-    def __init__(self, position, parent=None):
-        self.position = position
-        self.parent = parent
-
-    def __eq__(self, other):
-        return self.position == other.position
-
-def valid_move(maze, position):
-    x, y = position
-    rows, cols = maze.shape
-
-    possible_moves = [
-        (0, 1), (0, -1),       # Right, Left
-        (1, 0), (-1, 0)        # Down, Up
-    ]
-
-    return [
-        (x + nx, y + ny) for nx, ny in possible_moves
-        if 0 <= x + nx < rows and 0 <= y + ny < cols
-        and maze[x + nx, y + ny] != 1
-    ]
-
-def reconstruct_path(current_node):
-    path = []
-    while current_node:
-        path.append(current_node.position)
-        current_node = current_node.parent
-    return path[::-1]
+from node import Node
+from utils import reconstruct_path
+from utils import valid_move
 
 def depth_limited_search(maze, current_node, goal_node, depth, visited):
     if current_node == goal_node:

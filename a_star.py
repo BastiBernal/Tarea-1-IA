@@ -1,53 +1,15 @@
 import numpy as np
 import heapq
-
-class Node:
-    def __init__(self, position, parent=None):
-        self.position = position
-        self.parent = parent
-        self.g = 0              # Start to current node cost
-        self.h = 0              # Heuristic cost to goal
-        self.f = 0              # Total cost
-
-    def __eq__(self, other):
-        return self.position == other.position
-    
-    def __lt__(self, other):
-        return self.f < other.f
+from node import AStarNode
+from utils import reconstruct_path
+from utils import valid_move
 
 def manhattan_distance(start, goal):
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
-def valid_move(maze, position):
-    x, y = position
-    rows, cols = maze.shape
-
-    possible_moves = [
-        (0, 1), (0, -1),       # Right, Left
-        (1, 0), (-1, 0)        # Down, Up
-    ]
-
-    return [
-        (x + nx, y + ny) for nx, ny in possible_moves
-        if 0 <= x + nx < rows and 0 <= y + ny < cols
-        and maze[x + nx, y + ny] != 1
-    ]
-
-def reconstruct_path(current_node):
-    path = []
-    while current_node:
-        path.append(current_node.position)
-        current_node = current_node.parent
-    return path[::-1]
-
 def a_star(maze, start, goal):
-    start_node = Node(start)
-    goal_node = Node(goal)
-
-    open_list = []
-    closed_list = set()
-
-    heapq.heappush(open_list, start_node)
+    start_node = AStarNode(start)
+    goal_node = AStarNode(goal)
 
     open_list = []
     closed_list = dict()  # clave: posición, valor: costo g
@@ -66,7 +28,7 @@ def a_star(maze, start, goal):
             return reconstruct_path(current_node)
 
         for move in valid_move(maze, current_node.position):
-            neighbor = Node(move, current_node)
+            neighbor = AStarNode(move, current_node)
             neighbor.g = current_node.g + 1
             neighbor.h = manhattan_distance(neighbor.position, goal_node.position)
             neighbor.f = neighbor.g + neighbor.h
