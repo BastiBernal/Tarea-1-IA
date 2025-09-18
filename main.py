@@ -2,6 +2,7 @@ import numpy as np
 import sys
 import threading
 from a_star import a_star
+from iddfs import iddfs
 from interfaz_grilla import MainWindow
 from utils import get_test_maze
 from algorithm_runner import AlgorithmRunner
@@ -23,20 +24,31 @@ def main():
     }
     state_lock = threading.Lock()
 
-    # Hilo del algoritmo de búsqueda (sin AlgorithmRunner)
     def a_star_thread():
         def on_step(visited, frontier, path):
             with state_lock:
                 shared_state['visited'] = set(visited)
                 shared_state['frontier'] = set(frontier)
                 shared_state['path'] = list(path)
-            import time; time.sleep(0.06)
+            import time; time.sleep(0.1)
         path = a_star(maze, start, goal, on_step=on_step)
         with state_lock:
             shared_state['path'] = path
             shared_state['done'] = True
 
-    t = threading.Thread(target=a_star_thread, daemon=True)
+    def iddfs_thread():
+        def on_step(visited, frontier, path):
+            with state_lock:
+                shared_state['visited'] = set(visited)
+                shared_state['frontier'] = set(frontier)
+                shared_state['path'] = list(path)
+            import time; time.sleep(0.00001)
+        path = iddfs(maze, start, goal, max_depth=100, on_step=on_step)
+        with state_lock:
+            shared_state['path'] = path
+            shared_state['done'] = True
+
+    t = threading.Thread(target=iddfs_thread, daemon=True)
     t.start()
 
     app = QApplication(sys.argv)
