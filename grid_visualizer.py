@@ -1,8 +1,8 @@
-import sys
 import numpy as np
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QImage
 
 def maze_to_image(maze):
     color_map = np.array([
@@ -15,7 +15,7 @@ def maze_to_image(maze):
         [18, 110, 130]    # 6: frontier
     ], dtype=np.uint8)
     img = color_map[maze]
-    return QImage(img.data, img.shape[1], img.shape[0], img.strides[0], QImage.Format_RGB888).copy()
+    return QImage(img.data, img.shape[1], img.shape[0], img.strides[0], QImage.Format.Format_RGB888).copy()
 
 class MazeWidget(QLabel):
     def __init__(self, grid):
@@ -35,7 +35,7 @@ class MazeWidget(QLabel):
         self.update_image()
 
 class MainWindow(QWidget):
-    def __init__(self, maze):
+    def __init__(self, maze, get_grid_func):
         super().__init__()
         self.setWindowTitle("Laberinto")
         self.maze_widget = MazeWidget(maze)
@@ -44,11 +44,12 @@ class MainWindow(QWidget):
         layout.addWidget(self.maze_widget)
         self.setLayout(layout)
 
+        self.get_grid_func = get_grid_func
+
         # Temporizador de refresco visual
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_view)
-        self.refresh_timer.start(200)
+        self.refresh_timer.start(50)
 
     def refresh_view(self):
-        new_grid = self.maze_widget.grid
-        self.maze_widget.set_grid(new_grid)
+        self.maze_widget.set_grid(self.get_grid_func())

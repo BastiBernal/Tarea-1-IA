@@ -1,11 +1,4 @@
-import time
 import numpy as np
-
-def visual_timer(interval, get_grid_func, update_gui_func, stop_event):
-    while not stop_event.is_set():
-        grid = get_grid_func()
-        update_gui_func(grid)
-        time.sleep(interval)
 
 def reconstruct_path(current_node):
     path = []

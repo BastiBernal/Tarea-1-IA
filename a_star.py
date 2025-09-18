@@ -1,4 +1,3 @@
-import numpy as np
 import heapq
 from node import AStarNode
 from utils import reconstruct_path
@@ -7,7 +6,7 @@ from utils import valid_move
 def manhattan_distance(start, goal):
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
-def a_star(maze, start, goal, on_step=None):
+def a_star(maze, start, goal, on_step=None, should_stop=None):
     start_node = AStarNode(start)
     goal_node = AStarNode(goal)
 
@@ -20,6 +19,8 @@ def a_star(maze, start, goal, on_step=None):
     frontier = set([start])
 
     while open_list:
+        if should_stop and should_stop():
+            return []
         current_node = heapq.heappop(open_list)
         frontier.discard(current_node.position)
         visited.add(current_node.position)
@@ -38,6 +39,8 @@ def a_star(maze, start, goal, on_step=None):
             return reconstruct_path(current_node)
 
         for move in valid_move(maze, current_node.position):
+            if should_stop and should_stop():
+                return []
             neighbor = AStarNode(move, current_node)
             neighbor.g = current_node.g + 1
             neighbor.h = manhattan_distance(neighbor.position, goal_node.position)

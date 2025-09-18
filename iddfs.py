@@ -3,7 +3,9 @@ from node import Node
 from utils import reconstruct_path
 from utils import valid_move
 
-def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=None, path=None):
+def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=None, path=None, should_stop=None):
+    if should_stop and should_stop():
+        return None
     if path is None:
         path = []
     path.append(current_node.position)
@@ -19,9 +21,11 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
     visited.add(current_node.position)
 
     for move in valid_move(maze, current_node.position):
+        if should_stop and should_stop():
+            return None
         if move not in visited:
             neighbor = Node(move, current_node)
-            result = depth_limited_search(maze, neighbor, goal_node, depth - 1, visited, on_step, path)
+            result = depth_limited_search(maze, neighbor, goal_node, depth - 1, visited, on_step, path, should_stop)
             if result is not None:
                 return result
 
@@ -29,13 +33,15 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
     path.pop()
     return None
 
-def iddfs(maze, start, goal, max_depth=50, on_step=None):
+def iddfs(maze, start, goal, max_depth=50, on_step=None, should_stop=None):
     start_node = Node(start)
     goal_node = Node(goal)
 
     for depth in range(max_depth):
+        if should_stop and should_stop():
+            return None
         visited = set()
-        result = depth_limited_search(maze, start_node, goal_node, depth, visited, on_step)
+        result = depth_limited_search(maze, start_node, goal_node, depth, visited, on_step, should_stop=should_stop)
         if result is not None:
             return result
 

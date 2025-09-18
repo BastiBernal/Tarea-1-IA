@@ -1,90 +1,35 @@
-import numpy as np
-import sys
-import threading
+from config import MAZE, START, GOAL, ALGORITHM
+from shared import SharedState
+from callback import make_on_step, make_get_grid_func
+from algorithm_runner import AlgorithmRunner
+from grid_visualizer import MainWindow
 from a_star import a_star
 from iddfs import iddfs
-from interfaz_grilla import MainWindow
-from utils import get_test_maze
-from algorithm_runner import AlgorithmRunner
 from PySide6.QtWidgets import QApplication
+import sys
 
 def main():
-
-    # Configuración de ejemplo
-    maze = get_test_maze()
-    start = (0, 0)
-    goal = (29, 29)
-
-    # Estado compartido y lock
-    shared_state = {
-        'visited': set(),
-        'frontier': set(),
-        'path': [],
-        'done': False
-    }
-    state_lock = threading.Lock()
-
-    def a_star_thread():
-        def on_step(visited, frontier, path):
-            with state_lock:
-                shared_state['visited'] = set(visited)
-                shared_state['frontier'] = set(frontier)
-                shared_state['path'] = list(path)
-            import time; time.sleep(0.1)
-        path = a_star(maze, start, goal, on_step=on_step)
-        with state_lock:
-            shared_state['path'] = path
-            shared_state['done'] = True
-
-    def iddfs_thread():
-        def on_step(visited, frontier, path):
-            with state_lock:
-                shared_state['visited'] = set(visited)
-                shared_state['frontier'] = set(frontier)
-                shared_state['path'] = list(path)
-            import time; time.sleep(0.00001)
-        path = iddfs(maze, start, goal, max_depth=100, on_step=on_step)
-        with state_lock:
-            shared_state['path'] = path
-            shared_state['done'] = True
-
-    t = threading.Thread(target=iddfs_thread, daemon=True)
-    t.start()
-
+    shared_state = SharedState()
     app = QApplication(sys.argv)
-    w = MainWindow(maze)
+    get_grid_func = make_get_grid_func(MAZE, shared_state, START, GOAL)
+    w = MainWindow(MAZE, get_grid_func)
 
-    # Evento para detener el temporizador visual al cerrar la app
-    stop_event = threading.Event()
 
-    from utils import get_maze, visual_timer
+    algorithm = a_star if ALGORITHM == "a_star" else iddfs
 
-    def get_grid_for_visual():
-        with state_lock:
-            return get_maze(
-                maze,
-                visited=shared_state['visited'],
-                frontier=shared_state['frontier'],
-                path=shared_state['path'],
-                start=start,
-                goal=goal
-            )
-
-    def update_gui(grid):
-        w.maze_widget.set_grid(grid)
-    w.update()
-
-    # Hilo del temporizador visual
-    visual_thread = threading.Thread(
-        target=visual_timer,
-        args=(0.05, get_grid_for_visual, update_gui, stop_event),
-        daemon=True
+    runner = AlgorithmRunner(
+        algorithm_func=algorithm,
+        get_grid_func=get_grid_func,
+        on_step=None,
+        interval=0.05
     )
-    visual_thread.start()
+
+    runner.on_step = make_on_step(shared_state, pause=0.05, should_stop=runner.stop_event.is_set)
+    runner.start(MAZE, START, GOAL)
+    app.aboutToQuit.connect(runner.stop)
 
     w.show()
     app.exec()
-    stop_event.set()  # Detener el temporizador al cerrar la app
 
 if __name__ == "__main__":
     main()
