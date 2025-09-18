@@ -1,4 +1,4 @@
-from utils import get_test_maze
+from utils.utils import get_test_maze
 
 # Configuración del laberinto de prueba
 

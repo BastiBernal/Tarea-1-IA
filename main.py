@@ -1,10 +1,10 @@
-from config import MAZE, START, GOAL, ALGORITHM
-from shared import SharedState
-from callback import make_on_step, make_get_grid_func
-from algorithm_runner import AlgorithmRunner
-from grid_visualizer import MainWindow
-from a_star import a_star
-from iddfs import iddfs
+from utils.config import MAZE, START, GOAL, ALGORITHM
+from core.shared import SharedState
+from core.callback import make_on_step, make_get_grid_func
+from core.algorithm_runner import AlgorithmRunner
+from views.grid_visualizer import MainWindow
+from algorithms.a_star import a_star
+from algorithms.iddfs import iddfs
 from PySide6.QtWidgets import QApplication
 import sys
 
