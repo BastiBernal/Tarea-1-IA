@@ -1,6 +1,11 @@
 from utils import get_maze
 
 def make_on_step(shared_state, pause=0.05, should_stop=None):
+    """
+    Función de callback que se llama en cada paso del algoritmo.
+    Actualiza el estado compartido con los nodos visitados, la frontera y el camino actual.
+    Permite pausar la ejecución y detenerla si es necesario.
+    """
     def on_step(visited, frontier, path):
         if should_stop and should_stop():
             return
@@ -16,6 +21,9 @@ def make_on_step(shared_state, pause=0.05, should_stop=None):
     return on_step
 
 def make_get_grid_func(maze, shared_state, start, goal):
+    """
+    Función que devuelve la cuadrícula actual del laberinto.
+    """
     def get_grid():
         with shared_state.lock:
             return get_maze(

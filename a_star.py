@@ -4,15 +4,28 @@ from utils import reconstruct_path
 from utils import valid_move
 
 def manhattan_distance(start, goal):
+    """
+    Por defecto usada en A* para 4 direcciones (arriba, abajo, izquierda, derecha).
+    """
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
 def a_star(maze, start, goal, on_step=None, should_stop=None):
+    """
+    Implementación del algoritmo A* para encontrar el camino más corto en un laberinto.
+    Args:
+        maze (np.array): La cuadrícula del laberinto.
+        start (tuple): La posición de inicio.
+        goal (tuple): La posición objetivo.
+        on_step (func, optional): Función de callback para cada paso.
+        should_stop (func, optional): Función que indica si se debe detener la búsqueda.
+    """
     start_node = AStarNode(start)
     goal_node = AStarNode(goal)
 
     open_list = []
-    closed_list = dict()  # clave: posición, valor: costo g
-
+    # Mantener un diccionario de nodos cerrados para optimizar búsquedas
+    closed_list = dict()
+    # Usar un heap para la lista abierta para eficiencia
     heapq.heappush(open_list, start_node)
 
     visited = set()
@@ -35,6 +48,7 @@ def a_star(maze, start, goal, on_step=None, should_stop=None):
             continue
         closed_list[current_node.position] = current_node.g
 
+        # Si llegamos al objetivo, reconstruimos y devolvemos el camino
         if current_node == goal_node:
             return reconstruct_path(current_node)
 
@@ -62,4 +76,4 @@ def a_star(maze, start, goal, on_step=None, should_stop=None):
             heapq.heappush(open_list, neighbor)
             frontier.add(move)
 
-    return []  # No path found
+    return []  # No hay camino

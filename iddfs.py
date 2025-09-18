@@ -1,9 +1,20 @@
-import numpy as np
 from node import Node
 from utils import reconstruct_path
 from utils import valid_move
 
 def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=None, path=None, should_stop=None):
+    """
+    Realiza una búsqueda en profundidad limitada en el laberinto.
+    Args:
+        maze (np.array): La cuadrícula del laberinto.
+        current_node (Node): El nodo actual en la búsqueda.
+        goal_node (Node): El nodo objetivo.
+        depth (int): La profundidad límite para la búsqueda.
+        visited (set): Conjunto de posiciones ya visitadas.
+        on_step (func, optional): Función de callback para cada paso.
+        path (list, optional): Camino actual desde el inicio hasta el nodo actual.
+        should_stop (func, optional): Función que indica si se debe detener la búsqueda.
+    """
     if should_stop and should_stop():
         return None
     if path is None:
@@ -34,6 +45,16 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
     return None
 
 def iddfs(maze, start, goal, max_depth=50, on_step=None, should_stop=None):
+    """
+    Realiza una búsqueda en profundidad iterativa en el laberinto.
+    Args:
+        maze (np.array): La cuadrícula del laberinto.
+        start (tuple): La posición de inicio.
+        goal (tuple): La posición objetivo.
+        max_depth (int, optional): La profundidad máxima de búsqueda.
+        on_step (func, optional): Función de callback para cada paso.
+        should_stop (func, optional): Función que indica si se debe detener la búsqueda.
+    """
     start_node = Node(start)
     goal_node = Node(goal)
 
@@ -45,4 +66,4 @@ def iddfs(maze, start, goal, max_depth=50, on_step=None, should_stop=None):
         if result is not None:
             return result
 
-    return None
+    return None # No hay camino

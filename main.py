@@ -14,17 +14,22 @@ def main():
     get_grid_func = make_get_grid_func(MAZE, shared_state, START, GOAL)
     w = MainWindow(MAZE, get_grid_func)
 
-
-    algorithm = a_star if ALGORITHM == "a_star" else iddfs
+    algorithms = {
+        "A*": a_star,
+        "IDDFS": iddfs
+    }
 
     runner = AlgorithmRunner(
-        algorithm_func=algorithm,
+        algorithm_func=algorithms[ALGORITHM],
         get_grid_func=get_grid_func,
-        on_step=None,
-        interval=0.05
+        on_step=lambda visited, frontier, path: make_on_step(
+            shared_state,
+            pause=0.01, # Pausa de 10 ms entre cada paso
+            should_stop=lambda: runner.stop_event.is_set()
+        )(visited, frontier, path),
+        interval=0.05 # Intervalo de 50 ms entre actualizaciones de la interfaz gráfica (20 fps)
     )
 
-    runner.on_step = make_on_step(shared_state, pause=0.05, should_stop=runner.stop_event.is_set)
     runner.start(MAZE, START, GOAL)
     app.aboutToQuit.connect(runner.stop)
 
