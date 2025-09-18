@@ -7,7 +7,7 @@ from utils import valid_move
 def manhattan_distance(start, goal):
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
-def a_star(maze, start, goal):
+def a_star(maze, start, goal, on_step=None):
     start_node = AStarNode(start)
     goal_node = AStarNode(goal)
 
@@ -16,8 +16,18 @@ def a_star(maze, start, goal):
 
     heapq.heappush(open_list, start_node)
 
+    visited = set()
+    frontier = set([start])
+
     while open_list:
         current_node = heapq.heappop(open_list)
+        frontier.discard(current_node.position)
+        visited.add(current_node.position)
+
+        # Callback para visualización
+        if on_step:
+            path_so_far = reconstruct_path(current_node)
+            on_step(visited, [n.position for n in open_list], path_so_far)
 
         # Si ya visitamos este nodo con menor o igual costo, lo ignoramos
         if current_node.position in closed_list and current_node.g >= closed_list[current_node.position]:
@@ -47,19 +57,6 @@ def a_star(maze, start, goal):
                 continue
 
             heapq.heappush(open_list, neighbor)
+            frontier.add(move)
 
     return []  # No path found
-
-# Ejemplo de uso
-if __name__ == "__main__":
-    maze = np.array([
-        [0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 0],
-        [0, 0, 0, 1, 0],
-        [0, 1, 0, 0, 0],
-        [0, 0, 0, 1, 0]
-    ])
-    start = (0, 0)
-    goal = (4, 4)
-    path = a_star(maze, start, goal)
-    print("Camino:", path)
