@@ -1,6 +1,6 @@
-from node import Node
-from utils import reconstruct_path
-from utils import valid_move
+from algorithms.node import Node
+from utils.utils import reconstruct_path
+from utils.utils import valid_move
 
 def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=None, path=None, should_stop=None):
     """

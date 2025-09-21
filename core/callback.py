@@ -1,4 +1,4 @@
-from utils import get_maze
+from utils.utils import get_maze
 
 def make_on_step(shared_state, pause=0.05, should_stop=None):
     """

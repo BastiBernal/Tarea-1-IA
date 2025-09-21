@@ -1,7 +1,7 @@
 import heapq
-from node import AStarNode
-from utils import reconstruct_path
-from utils import valid_move
+from algorithms.node import AStarNode
+from utils.utils import reconstruct_path
+from utils.utils import valid_move
 
 def manhattan_distance(start, goal):
     """
