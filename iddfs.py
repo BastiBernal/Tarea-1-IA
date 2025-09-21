@@ -19,6 +19,7 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
         return None
     if path is None:
         path = []
+        
     path.append(current_node.position)
     if on_step:
         on_step(visited.copy(), set(), path.copy())

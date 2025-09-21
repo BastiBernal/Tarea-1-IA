@@ -6,6 +6,7 @@ from grid_visualizer import MainWindow
 from a_star import a_star
 from iddfs import iddfs
 from PySide6.QtWidgets import QApplication
+from genetic_algorithm import genetic_algorithm as ga
 import sys
 
 def main():
@@ -16,7 +17,8 @@ def main():
 
     algorithms = {
         "A*": a_star,
-        "IDDFS": iddfs
+        "IDDFS": iddfs, 
+        "GA": ga
     }
 
     runner = AlgorithmRunner(
