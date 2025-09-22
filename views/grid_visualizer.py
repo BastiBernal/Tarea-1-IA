@@ -16,12 +16,12 @@ def maze_to_image(maze):
     6: frontera
     """
     color_map = np.array([
-        [230, 240, 252],  # fondo
-        [47, 56, 66],     # paredes
-        [38, 237, 214],   # camino
-        [80, 200, 210],   # visitado?
-        [255, 69, 69],    # inicio
-        [75, 227, 101],   # meta
+        [230, 240, 252],  
+        [47, 56, 66],     
+        [38, 237, 214],   
+        [80, 200, 210],   
+        [255, 69, 69],    
+        [75, 227, 101],   
         [18, 110, 130]      
     ], dtype=np.uint8)
     img = color_map[maze]
