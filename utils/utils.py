@@ -38,24 +38,43 @@ def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goal
     if visited:
         for pos in visited:
             x, y = pos
-            if grid[x, y] == 0:
-                grid[x, y] = 3
+
+            # si esta dentro de la grilla
+            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
+                if grid[x, y] == 0:
+                    grid[x, y] = 3
+
+
     # Marca frontera
     if frontier:
         for pos in frontier:
             x, y = pos
-            if grid[x, y] == 0:
-                grid[x, y] = 6
+
+            # si esta dentro de la grilla
+            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
+                if grid[x, y] == 0:
+                    grid[x, y] = 6
+
     # Marca camino solución
     if path:
         for pos in path:
             x, y = pos
-            if grid[x, y] == 0 or grid[x, y] == 3 or grid[x, y] == 6:
-                grid[x, y] = 2
+
+            # si esta dentro de la grilla
+            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
+                if grid[x, y] == 0 or grid[x, y] == 3 or grid[x, y] == 6:
+                    grid[x, y] = 2
+                    
+                elif grid[x,y] == 1:
+                    grid[x,y] = 7
+                    
+
+
     # Marca inicio y meta
     if start:
         x, y = start
         grid[x, y] = 4
+
     if goal:
         x, y = goal
         grid[x, y] = 5
@@ -96,4 +115,55 @@ def get_test_maze():
         [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
         [1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
         [0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+    ])
+
+def get_test_maze_10x10():
+    """
+    Devuelve un laberinto de prueba de 10x10.
+    """
+    return np.array([
+        [0, 0, 0, 0, 1, 0, 1, 1, 0, 0],
+        [1, 0, 1, 1, 0, 1, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0, 1, 1, 0, 1, 1],
+        [1, 1, 0, 0, 1, 0, 1, 1, 0, 0],
+        [0, 1, 1, 0, 1, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 1, 1, 0, 1, 0],
+        [1, 1, 0, 0, 0, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 1, 0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 1, 1, 0, 0, 0, 1, 1, 1, 0]
+    ])
+
+def get_test_maze_5x5():
+    """
+    Devuelve un laberinto de prueba de 5x5.
+    """
+    return np.array([
+        [0, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 0, 0]
+    ])
+
+def get_test_maze_15x15():
+    """
+    Devuelve un laberinto de prueba de 15x15.
+    """
+    return np.array([
+        [0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0],
+        [1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+        [0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+        [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0],
+        [0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0],
+        [1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+        [0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0],
+        [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0],
+        [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0],
+        [1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ])
