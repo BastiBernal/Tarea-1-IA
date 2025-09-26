@@ -25,10 +25,10 @@ def valid_move(maze, position):
     return [
         (x + nx, y + ny) for nx, ny in possible_moves
         if 0 <= x + nx < rows and 0 <= y + ny < cols
-        and maze[x + nx, y + ny] != 1
+        and maze[x + nx, y + ny] == 0
     ]
 
-def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goal=None):
+def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goals=None):
     """
     Devuelve una representación del laberinto con los nodos visitados, frontera y camino resaltados, según aplique.
     """
@@ -56,7 +56,7 @@ def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goal
     if start:
         x, y = start
         grid[x, y] = 4
-    if goal:
+    for goal in goals:
         x, y = goal
         grid[x, y] = 5
     return grid
