@@ -14,6 +14,7 @@ def maze_to_image(maze):
     4: inicio
     5: meta
     6: frontera
+    7: camino por sobre pared
     """
     color_map = np.array([
         [230, 240, 252],  
@@ -22,7 +23,8 @@ def maze_to_image(maze):
         [80, 200, 210],   
         [255, 69, 69],    
         [75, 227, 101],   
-        [18, 110, 130]      
+        [18, 110, 130],
+        [66, 47, 47]   
     ], dtype=np.uint8)
     img = color_map[maze]
     return QImage(img.data, img.shape[1], img.shape[0], img.strides[0], QImage.Format.Format_RGB888).copy()
