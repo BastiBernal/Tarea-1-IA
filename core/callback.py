@@ -32,6 +32,6 @@ def make_get_grid_func(maze, shared_state, start, goal):
                 frontier=shared_state.data['frontier'],
                 path=shared_state.data['path'],
                 start=start,
-                goal=goal
+                goals=goal
             )
     return get_grid
