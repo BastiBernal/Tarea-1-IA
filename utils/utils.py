@@ -56,9 +56,10 @@ def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goal
     if start:
         x, y = start
         grid[x, y] = 4
-    for goal in goals:
-        x, y = goal
-        grid[x, y] = 5
+    if goals:
+        for goal in goals:
+            x, y = goal
+            grid[x, y] = 5
     return grid
 
 def get_test_maze():
