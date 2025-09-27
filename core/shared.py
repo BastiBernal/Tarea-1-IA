@@ -10,5 +10,6 @@ class SharedState:
             'visited': set(),
             'frontier': set(),
             'path': [],
+            'agent': None
         }
         self.lock = threading.Lock()

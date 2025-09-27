@@ -13,6 +13,7 @@ def make_on_step(shared_state, pause=0.05, should_stop=None):
             shared_state.data['visited'] = set(visited)
             shared_state.data['frontier'] = set(frontier)
             shared_state.data['path'] = list(path)
+            shared_state.data['agent'] = path[-1] if path else None
         if should_stop and should_stop():
             return
         if pause and pause > 0:
@@ -32,6 +33,7 @@ def make_get_grid_func(maze, shared_state, start, goal):
                 frontier=shared_state.data['frontier'],
                 path=shared_state.data['path'],
                 start=start,
-                goals=goal
+                goals=goal,
+                agent=shared_state.data['agent']
             )
     return get_grid
