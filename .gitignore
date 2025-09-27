@@ -210,3 +210,4 @@ __marimo__/
 # archivos a ignorar
 MazeSolvingUsingGA.py
 results.txt
+ga_libreria.py

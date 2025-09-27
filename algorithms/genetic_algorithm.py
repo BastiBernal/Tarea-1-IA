@@ -50,6 +50,8 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         '''
         path = [start]
         invalid_count = 0
+        loop_count = 0
+        visited = {start: 0}
 
         row = start[0]
         col = start[1]
@@ -90,6 +92,14 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                 current_pos = new_pos
                 path.append(current_pos)
 
+                # NUEVO: Verificar si es un loop
+                if current_pos in visited:
+                    loop_count += 1
+                    # Opcional: también puedes registrar el tamaño del loop
+                    # loop_size = len(path) - 1 - visited_positions[current_pos]
+                else:
+                    visited[current_pos] = len(path) - 1
+
 
                 # si llega a una interseccion o esquina pasa al siguiente movimiento
                 if intersection_point(maze, new_pos, goal) == True:
@@ -99,11 +109,12 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         individual.path = path
         individual.path_length = len(path)
         individual.invalid_steps = invalid_count
+        individual.loops = loop_count
         # individual.path.append(goal)
 
 
 '''
-Representa un individuo de la poblacion del algoritmo genetico
+Representa un individuo de la poblacion del algoritmo genetico.
 '''
 
 class Individual:
@@ -114,6 +125,7 @@ class Individual:
         self.path_length = 0
         self.fitness = 0          # que tan apto es el individuo
         self.invalid_steps = 0    # cant. de veces que atraviesa paredes
+        self.loops = 0            # cant de veces que pasa por el mismo lugar
 
     def print_info(self, show_path=False, maze=None, start=None, goal=None, population=None):
         print(f"\033[96mChromosoma:\033[0m {self.chromosome}")
@@ -127,7 +139,7 @@ class Individual:
 
 
 '''
-Clase para el 
+Clase para encontrar salidas de un laberinto con un algoritmo genetico.
 '''
 class Genetic_Algorithm:
 
@@ -206,7 +218,7 @@ class Genetic_Algorithm:
         moves = ['U', 'D', 'R', 'L']
 
         # Distancia mínima necesaria
-        min_distance = abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])
+        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1]))*( sqrt(self.rows * self.columns) / 10)
         
         for i in range(self.population_size):
             # Variar la longitud de los genes según diferentes estrategias
@@ -274,7 +286,7 @@ class Genetic_Algorithm:
 
         index = int(self.population_size*(1 - self.p_individual_mutation)) # indice del inicio de individuos a mutar.
 
-        for ind in range(index, self.population_size):
+        for ind in range(0, self.population_size):
 
             if random() <= self.p_individual_mutation:
 
@@ -292,23 +304,19 @@ class Genetic_Algorithm:
     """
     def fitness_func(self):
        
-
-        # Pesos ajustados - suma total = 1 para mejor control
+        # Pesos
         w_is = 0.4    # Penalización por pasos inválidos
-        w_d = 0.25    # Distancia a la meta (reducido)
-        w_l = 0.15    # Longitud del camino
-        w_prog = 0.15 # Progreso máximo alcanzado (NUEVO)
-        w_explore = 0.05 # Bonificación por exploración (NUEVO)
-
+        w_d = 0.35    # Distancia a la meta (reducido)
+        w_l = 0.10    # Longitud del camino
+        w_prog = 0.15 # Progreso máximo alcanzado 
+        w_loop = 0.20 # Progreso máximo alcanzado 
+       
         # Distancia Manhattan total posible
         d_tot = abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])
 
-        # Obtener rangos para normalización robusta
-        invalid_steps = [ind.invalid_steps for ind in self.population]
+        # Obtener rangos para normalización 
         path_lengths = [ind.path_length for ind in self.population]
 
-        # Usar percentiles para normalización más robusta
-        Smax = max(invalid_steps) if invalid_steps else 1
         Lmax = max(path_lengths) if path_lengths else 1
         Lmin = min(path_lengths) if path_lengths else 0
 
@@ -317,49 +325,49 @@ class Genetic_Algorithm:
             d_goal = abs(self.goal[0] - final_pos[0]) + abs(self.goal[1] - final_pos[1]) # manhattan distance
             d_goal = sqrt((self.goal[0] - final_pos[0])**2 + abs(self.goal[1] - final_pos[1])**2) # manhattan distance
             
-            # 1. Componente de pasos inválidos (penalización exponencial suavizada)
-            f_is = 1.0 / (1.0 + ind.invalid_steps * 0.5)  # Penalización suave
+            # Cantidad de pasos inválidos (penalización exponencial suavizada)
+            f_is = 1.0 / (1.0 + ind.invalid_steps * 0.5)  
+
+            # Cantidad de loops (penalización exponencial)
+            f_loop = 1.0 / (1.0 + ind.loops)  
             
-            # 2. Componente de distancia a la meta (más crítico cerca de la meta)
+            # Distancia a la meta (más crítico cerca de la meta)
             if d_goal == 0:  # Ha llegado a la meta
                 f_d = 1.0
             else:
                 # Penalización exponencial para distancias grandes
                 f_d = exp(-d_goal / max(d_tot, 1))
             
-            # 3. Componente de longitud del camino (normalización mejorada)
+            # Longitud del camino (normalización mejorada)
             if Lmax > Lmin:
                 f_l = 1.0 - ((ind.path_length - Lmin) / (Lmax - Lmin))
             else:
                 f_l = 1.0
 
-            # 4. NUEVO: Progreso máximo alcanzado durante el recorrido
+            # Progreso máximo alcanzado durante el recorrido
             best_distance_in_path = min(
                 abs(self.goal[0] - pos[0]) + abs(self.goal[1] - pos[1])
                 for pos in ind.path
             )
+
             f_prog = 1.0 - (best_distance_in_path / max(d_tot, 1))
             
-            # 5. NUEVO: Bonificación por exploración (diversidad de posiciones)
-            unique_positions = len(set(ind.path))
-            f_explore = min(unique_positions / len(ind.path), 1.0) if ind.path else 0
-
-            # Bonificación especial si llega a la meta 
+           
+            # Bonificación especial si llega a la meta con 0 pasos invalidos
             goal_bonus = 0
             if d_goal == 0 and ind.invalid_steps == 0:
-                goal_bonus = 5.0  # Gran bonificación por éxito completo
+                goal_bonus = 5.0  
             
             # Fitness final combinado
             ind.fitness = (w_is * f_is + 
                       w_d * f_d + 
                       w_l * f_l + 
+                      w_loop * f_loop +
                       w_prog * f_prog +
-                      w_explore * f_explore +
                       goal_bonus)
             
-            # Aplicar penalización severa por muchos pasos inválidos
-            if ind.invalid_steps > 15:
-                ind.fitness *= 0.1  # Reducir fitness dramáticamente
+            
+            
 
     '''
     Funcion para ejecutar el algoritmo.
@@ -379,7 +387,8 @@ class Genetic_Algorithm:
 
             # graficar e imprimir info del mejor individuo
             if on_step:
-                on_step([], [], self.population[0].path.copy())
+                last = self.population[0].path[-1]
+                on_step([last], [last], self.population[0].path.copy())
 
             if i % 100 == 0:
 
@@ -391,13 +400,13 @@ class Genetic_Algorithm:
             for individual in self.population:
                 
                 # si un camino llega a la meta sin cruzar ninguna pared, se retorna el camino.
-                if individual.invalid_steps == 0 and self.goal in individual.path:       
+                if self.goal in individual.path:       
                     goal_index = individual.path.index(self.goal)
 
                     print(f'\033[92mGeneracion {i}\033[0m')  # Green
                     print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
                     individual.print_info(show_path=False)
-                    print(f'\033[90m{individual.path[:goal_index + 1]}\033[0m')
+                    print(f'\033[91m{individual.path[:goal_index + 1]}\033[0m')
                     print('\033[90m------------------------------\033[0m')
                     print()
 
