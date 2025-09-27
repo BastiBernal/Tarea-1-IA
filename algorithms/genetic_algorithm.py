@@ -3,9 +3,6 @@ from random import randint, random, choice
 from numpy import exp, sqrt, hypot
 import sys
 
-from utils.utils import valid_move 
-
-
 
 '''
 Calcula si es que un punto en el laberinto es una interseccion. La meta cuenta como intersección.
@@ -48,13 +45,12 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         '''
         Calcular el camino a partir de la secuencia de movimientos.
         '''
-        path = [start]
+        path    = [start] 
+        visited = {start} 
+
         invalid_count = 0
         loop_count = 0
-        visited = {start: 0}
 
-        row = start[0]
-        col = start[1]
         current_pos = start      
 
         # mover agente 
@@ -83,8 +79,8 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                     invalid_count += 1
                     break
                 
-                # si choca con la pared
-                if maze[new_row][new_col] == 1:
+                # si el siguiente punto no es espacio libre
+                if maze[new_row][new_col] != 0:
                     invalid_count += 1
                     break
 
@@ -92,14 +88,27 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                 current_pos = new_pos
                 path.append(current_pos)
 
-                # NUEVO: Verificar si es un loop
+                # Verificar si es un loop
                 if current_pos in visited:
                     loop_count += 1
-                    # Opcional: también puedes registrar el tamaño del loop
-                    # loop_size = len(path) - 1 - visited_positions[current_pos]
-                else:
-                    visited[current_pos] = len(path) - 1
 
+                    # # Eliminar el loop cortando el path desde donde empezó el loop
+                    # loop_start_index = visited[current_pos]
+                    # path = path[:loop_start_index + 1]     # Mantener hasta el punto donde empezó el loop
+                    
+                    # # Actualizar visited removiendo las posiciones del loop eliminado
+                    # positions_to_remove = []
+                    # for pos, idx in visited.items():
+                    #     if idx > loop_start_index:
+                    #         positions_to_remove.add(pos)
+                    # for pos in positions_to_remove:
+                    #     del visited[pos]
+                    # # No agregar la posición actual ya que crearía el loop de nuevo
+                    break  # Salir del bucle while para pasar al siguiente movimiento               
+                
+                # Agregar a path y visited
+                path.append(current_pos)
+                visited.add(current_pos)
 
                 # si llega a una interseccion o esquina pasa al siguiente movimiento
                 if intersection_point(maze, new_pos, goal) == True:
@@ -110,7 +119,7 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         individual.path_length = len(path)
         individual.invalid_steps = invalid_count
         individual.loops = loop_count
-        # individual.path.append(goal)
+        # individual.path.add(goal)
 
 
 '''
@@ -127,13 +136,14 @@ class Individual:
         self.invalid_steps = 0    # cant. de veces que atraviesa paredes
         self.loops = 0            # cant de veces que pasa por el mismo lugar
 
-    def print_info(self, show_path=False, maze=None, start=None, goal=None, population=None):
-        print(f"\033[96mChromosoma:\033[0m {self.chromosome}")
+    def print_info(self, show_path=False, show_chromosome=False):
+        
         print(f"\033[96mFitness:\033[0m {self.fitness:.3f}")
         print(f"\033[96mPasos Invalidos:\033[0m {self.invalid_steps}")
         print(f"\033[96mLargo del Camino:\033[0m {self.path_length}")
 
-    
+        if show_chromosome: 
+            print(f"\033[96mCromosoma:\033[0m {self.chromosome}")
         if show_path:
             print(f"\033[91mPath: {self.path}\033[0m")
 
@@ -143,7 +153,7 @@ Clase para encontrar salidas de un laberinto con un algoritmo genetico.
 '''
 class Genetic_Algorithm:
 
-    def __init__(self, maze, start, goal, population_size=1000, p_individual_mutation=0.80, p_gene_mutation=0.04, minimum_fitness=0):
+    def __init__(self, maze, start, goal, population_size=1000, p_individual_mutation=0.80, p_gene_mutation=0.06, minimum_fitness=0):
         # info laberinto
         self.maze = maze
         self.columns = len(maze[0])
@@ -305,11 +315,11 @@ class Genetic_Algorithm:
     def fitness_func(self):
        
         # Pesos
-        w_is = 0.4    # Penalización por pasos inválidos
-        w_d = 0.35    # Distancia a la meta (reducido)
-        w_l = 0.10    # Longitud del camino
-        w_prog = 0.15 # Progreso máximo alcanzado 
-        w_loop = 0.20 # Progreso máximo alcanzado 
+        w_is = 0.38      # Penalización por pasos inválidos
+        w_d = 0.35      # Distancia a la meta (reducido)
+        w_l = -0.15       # Longitud del camino
+        w_prog = 0.15   # Progreso máximo alcanzado 
+        w_loop = 0.4    # Progreso máximo alcanzado 
        
         # Distancia Manhattan total posible
         d_tot = abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])
@@ -388,12 +398,13 @@ class Genetic_Algorithm:
             # graficar e imprimir info del mejor individuo
             if on_step:
                 last = self.population[0].path[-1]
-                on_step([last], [last], self.population[0].path.copy())
+                on_step([], [last], self.population[0].path[:-1].copy())
 
-            if i % 100 == 0:
+            if i % 2== 0:
 
                 print('Generacion', i)
-                self.population[0].print_info(maze=self.maze, start=self.start, goal=self.goal, population=self.population, show_path=True)
+                self.population[0].print_info()
+                print('Largo Cromosoma:', len(self.population[0].chromosome))
                 print ('------------------------------')
               
             # revisar si algun individuo ha llegado a la meta
@@ -403,9 +414,10 @@ class Genetic_Algorithm:
                 if self.goal in individual.path:       
                     goal_index = individual.path.index(self.goal)
 
-                    print(f'\033[92mGeneracion {i}\033[0m')  # Green
+                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
                     print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-                    individual.print_info(show_path=False)
+
+                    individual.print_info()
                     print(f'\033[91m{individual.path[:goal_index + 1]}\033[0m')
                     print('\033[90m------------------------------\033[0m')
                     print()
@@ -427,13 +439,15 @@ class Genetic_Algorithm:
         '''
         return None
 
+
+
 '''
 Funcion wrapper para llamar al algoritmo.
 '''
-def genetic_algorithm(maze, start, goal, on_step=None, should_stop=None):
+def genetic_algorithm(maze, start, goal, population_size=500, cant_generations=1000, on_step=None, should_stop=None) -> list:
 
-    ga = Genetic_Algorithm(maze, start, goal, population_size=1000)
-    path_solution = ga.run(cant_generations=1000, on_step=on_step)
+    ga = Genetic_Algorithm(maze, start, goal, population_size=population_size)
+    path_solution = ga.run(cant_generations=cant_generations, on_step=on_step)
 
     if not path_solution: 
         print('\033[91mCamino no encontrado.\033[0m')  # Red
