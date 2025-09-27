@@ -4,5 +4,7 @@ from utils.utils import get_test_maze, get_test_maze_10x10, get_test_maze_15x15,
 
 MAZE = get_test_maze()
 START = (0, 0)
+
 GOAL = [(MAZE.shape[0] - 1, MAZE.shape[1] - 1)]
 ALGORITHM = "A*"
+

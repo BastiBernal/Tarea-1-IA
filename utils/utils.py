@@ -28,47 +28,33 @@ def valid_move(maze, position):
         and maze[x + nx, y + ny] == 0
     ]
 
-def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goals=None):
+def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goals=None, agent=None, adventurer=None):
     """
     Devuelve una representación del laberinto con los nodos visitados, frontera y camino resaltados, según aplique.
     """
     # Copia la grilla base para no modificar el original
     grid = np.array(base_maze)
+    
     # Marca nodos visitados
     if visited:
         for pos in visited:
             x, y = pos
-
-            # si esta dentro de la grilla
-            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
-                if grid[x, y] == 0:
-                    grid[x, y] = 3
-
+            if grid[x, y] == 0:
+                grid[x, y] = 3
 
     # Marca frontera
     if frontier:
         for pos in frontier:
             x, y = pos
-
-            # si esta dentro de la grilla
-            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
-                if grid[x, y] == 0:
-                    grid[x, y] = 6
+            if grid[x, y] == 0:
+                grid[x, y] = 6
 
     # Marca camino solución
     if path:
         for pos in path:
             x, y = pos
-
-            # si esta dentro de la grilla
-            if 0 <= x < grid.shape[0] and 0 <= y < grid.shape[1]:
-                if grid[x, y] == 0 or grid[x, y] == 3 or grid[x, y] == 6:
-                    grid[x, y] = 2
-                    
-                elif grid[x,y] == 1:
-                    grid[x,y] = 7
-                    
-
+            if grid[x, y] == 0 or grid[x, y] == 3 or grid[x, y] == 6:
+                grid[x, y] = 2
 
     # Marca inicio y meta
     if start:
@@ -78,6 +64,17 @@ def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goal
         for goal in goals:
             x, y = goal
             grid[x, y] = 5
+
+    # Marca agente actual
+    if agent:
+        x, y = agent
+        grid[x, y] = 7
+
+    # Marca aventurero
+    if adventurer:
+        x, y = adventurer
+        grid[x, y] = 8
+
     return grid
 
 def get_test_maze():
