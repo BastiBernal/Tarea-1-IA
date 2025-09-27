@@ -1,27 +1,22 @@
 import sys
-
-from numpy.random import randint
-
 from core.callback import make_get_grid_func
 from core.shared import SharedState
 from utils.utils import valid_move
 import random
-from maze_generators import *
+from maze.maze_generators import *
 from views.grid_visualizer import MainWindow
 import sys
-
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import QApplication
 
 class Maze:
 
     def __init__(self, size, n_walls, n_goals ,strategy, crazy_value = 0.05, start = (1,1)):
         self.crazy_value = crazy_value
-        self.walls = [[]]
+        walls_container = [[]]
         self.goals = []
         self.start = start
-        self.maze = strategy.execute(size, n_walls,start ,n_goals, self.goals, self.walls)
-        self.walls = self.walls[0]
+        self.maze = strategy.execute(size, n_walls, start, n_goals, self.goals, walls_container)
+        self.walls = [tuple(w) for w in walls_container[0]]
         self.real_goal = random.choice(self.goals)
 
     def mover_paredes(self):
