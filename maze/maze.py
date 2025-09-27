@@ -60,7 +60,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # matriz de ejemplo
-    maze = Maze(30,10,3,DFSStrategy(),crazy_value = 0.5, start = (6,6))
+    maze = Maze(30,10,30,DFSStrategy(),crazy_value = 0.5, start = (6,6))
     print(maze.walls)
     print(maze.goals)
     matriz = maze.maze

@@ -27,10 +27,12 @@ class DFSStrategy(MazeGenerator):
                     yield vecino_x, vecino_y
 
         stack = [start]
+        hoja = True
         while stack and len(walls[0]) > n_walls:
             x,y = stack[-1]
             posibles = [(nx, ny) for nx, ny in vecinos(x, y) if maze[nx, ny] == 1]
             if posibles:
+                hoja = True
                 nx,ny = (random.choice(posibles))
                 maze[(x + nx) // 2, (y + ny) // 2] = 0
                 maze[nx, ny] = 0
@@ -38,14 +40,20 @@ class DFSStrategy(MazeGenerator):
                 walls[0].remove(((x + nx) // 2, (y + ny) // 2))
                 stack.append((nx, ny))
             else:
+                if hoja:
+                    metas.append((x,y))
+                    hoja = False
                 stack.pop()
 
 
-        libres = list(zip(*np.where(maze == 0)))
-        for i in range(n_metas):
-            x,y = random.choice(libres)
-            maze[x,y] = 3
-            metas.append((x,y))
+        while len(metas) > n_metas:
+            metas.remove(random.choice(metas))
+
+        #libres = list(zip(*np.where(maze == 0)))
+        #for i in range(n_metas):
+            #x,y = random.choice(libres)
+            #maze[x,y] = 3
+            #metas.append((x,y))
 
         return maze
 
