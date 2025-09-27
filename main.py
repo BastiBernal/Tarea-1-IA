@@ -18,7 +18,7 @@ def main():
 
     # --------------------------------------------------------------
 
-    maze = Maze(100, 10, 3, DFSStrategy(), crazy_value=0.005, start=(1, 1))
+    maze = Maze(100, 3500, 3, DFSStrategy(), crazy_value=0.005, start=(1, 1))
 
     
     goal_for_algorithm = GOAL[0] if isinstance(GOAL, list) else GOAL

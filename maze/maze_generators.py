@@ -46,6 +46,11 @@ class DFSStrategy(MazeGenerator):
                 stack.pop()
 
 
+        while len(walls[0]) > n_walls:
+            delete = random.choice(walls[0])
+            walls[0].remove(delete)
+            maze[delete] = 0
+
         while len(metas) > n_metas:
             metas.remove(random.choice(metas))
 
