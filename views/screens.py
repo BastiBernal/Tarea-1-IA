@@ -22,7 +22,7 @@ class MazeSelectionScreen:
         self.goals_label = QLabel(f'Número de Metas: {self.simulation_args["goal_n"]}')
         self.layout.addWidget(self.goals_label)
 
-        self.sld_goals = QSlider(Qt.Horizontal)
+        self.sld_goals = QSlider(Qt.Orientation.Horizontal)
         self.sld_goals.setMinimum(1)
         self.sld_goals.setMaximum(100)
         self.sld_goals.setValue(self.simulation_args['goal_n'])
@@ -32,7 +32,7 @@ class MazeSelectionScreen:
         self.crazy_label = QLabel(f'Cantidad de Movimiento de los Muros: {self.simulation_args["crazy_val"] * 1000}')
         self.layout.addWidget(self.crazy_label)
 
-        self.sld_crazy_val = QSlider(Qt.Horizontal)
+        self.sld_crazy_val = QSlider(Qt.Orientation.Horizontal)
         self.sld_crazy_val.setMinimum(0)
         self.sld_crazy_val.setMaximum(10)
         self.sld_crazy_val.setValue(self.simulation_args['crazy_val'])
@@ -85,7 +85,7 @@ class GAParametersScreen:
     def show(self):
         # Population size
         self.pop_label = QLabel(f'Tamaño de la Población: {self.simulation_args["population_size"]}')
-        self.population = QSlider(Qt.Horizontal)
+        self.population = QSlider(Qt.Orientation.Horizontal)
         self.population.setMaximum(3000)
         self.population.setMinimum(100)
         self.population.setValue(self.simulation_args['population_size'])
@@ -96,7 +96,7 @@ class GAParametersScreen:
 
         # Generations
         self.gen_label = QLabel(f'Cantidad de Generaciones: {self.simulation_args["generation_n"]}')
-        self.generations = QSlider(Qt.Horizontal)
+        self.generations = QSlider(Qt.Orientation.Horizontal)
         self.generations.setMinimum(0)
         self.generations.setMaximum(3000)
         self.generations.setValue(self.simulation_args['generation_n'])
@@ -104,7 +104,7 @@ class GAParametersScreen:
 
         # Mutation probability
         self.indv_mut_label = QLabel(f'Probabilidad de Mutar Individuos: {self.simulation_args["individual_mutation_p"]}')
-        self.indv_mutation = QSlider(Qt.Horizontal)
+        self.indv_mutation = QSlider(Qt.Orientation.Horizontal)
         self.indv_mutation.setMinimum(0)
         self.indv_mutation.setMaximum(100)
         self.indv_mutation.setValue(int(self.simulation_args['individual_mutation_p'] * 100))
@@ -178,4 +178,3 @@ class RunSimulationScreen:
             btn_back.clicked.connect(lambda: self.callbacks['change_screen'](2))
             
         self.layout.addWidget(btn_back)
-

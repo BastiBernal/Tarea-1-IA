@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QVBoxLayout, QWidget, QPushButton, QFrame, QHBoxLayout, QLabel
-from PySide6.QtCore import Qt
 from .constants import COLORES
 from .toolbar import SimulationToolbar
 from .screens import MazeSelectionScreen, AlgorithmSelectionScreen, GAParametersScreen, RunSimulationScreen
@@ -23,6 +22,9 @@ class MenuWindow(QWidget):
             'generation_n': 100,
             'individual_mutation_p': 0.80
         }
+        def _noop_start():
+            pass
+        self.start_simulation = _noop_start
         self.stage = 1
         self.setup_window()
         self.setup_callbacks()
@@ -82,16 +84,16 @@ class MenuWindow(QWidget):
         self.toolbar.update_toolbar()
         
         self.content_widget = QWidget()
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(10, 10, 10, 10)
-        self.content_widget.setLayout(self.layout)
+        self.content_layout = QVBoxLayout()
+        self.content_layout.setContentsMargins(10, 10, 10, 10)
+        self.content_widget.setLayout(self.content_layout)
         
         self.main_layout.addWidget(self.toolbar)
         self.main_layout.addWidget(self.content_widget)
 
         button = QPushButton("Iniciar Simulacion")
         button.clicked.connect(lambda: self.change_screen(1))
-        self.layout.addWidget(button)
+        self.content_layout.addWidget(button)
 
         self.setLayout(self.main_layout)
         
@@ -111,10 +113,10 @@ class MenuWindow(QWidget):
         
     def create_screens(self):
         """Create screen instances"""
-        self.maze_screen = MazeSelectionScreen(self.layout, self.simulation_args, self.callbacks)
-        self.algorithm_screen = AlgorithmSelectionScreen(self.layout, self.callbacks)
-        self.ga_screen = GAParametersScreen(self.layout, self.simulation_args, self.callbacks)
-        self.run_screen = RunSimulationScreen(self.layout, self.simulation_args, self.callbacks)
+        self.maze_screen = MazeSelectionScreen(self.content_layout, self.simulation_args, self.callbacks)
+        self.algorithm_screen = AlgorithmSelectionScreen(self.content_layout, self.callbacks)
+        self.ga_screen = GAParametersScreen(self.content_layout, self.simulation_args, self.callbacks)
+        self.run_screen = RunSimulationScreen(self.content_layout, self.simulation_args, self.callbacks)
 
     def save_parameter(self, key, val, screen=None):
         if key in ['generation_n', 'goal_n', 'population_size']: 
@@ -135,7 +137,7 @@ class MenuWindow(QWidget):
             # dibujar el inicio
             button = QPushButton("Iniciar Simulacion")       
             button.clicked.connect(lambda: self.change_screen(1))
-            self.layout.addWidget(button)
+            self.content_layout.addWidget(button)
 
         elif screen == 1:
             self.maze_screen.show()
@@ -151,8 +153,8 @@ class MenuWindow(QWidget):
 
     def clear_layout(self):
         """Clear current layout"""
-        while self.layout.count():
-            child = self.layout.takeAt(0)
+        while self.content_layout.count():
+            child = self.content_layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
 
@@ -190,7 +192,7 @@ class MenuWindow(QWidget):
 
     def run_simulation(self):
         # Iniciar simulacion
-        if hasattr(self, 'start_simulation'):
+        if callable(self.start_simulation):
             self.start_simulation()
         else:
             print("Error: Simulacion empezada antes de ser configurada.")
