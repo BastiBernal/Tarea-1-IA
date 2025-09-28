@@ -1,4 +1,6 @@
+from core.game_runner import GameRunner
 from maze.maze_generators import DFSStrategy
+from maze.player import MazePlayer
 from utils.config import MAZE, START, GOAL, ALGORITHM
 from core.shared import SharedState
 from core.callback import make_on_step, make_get_grid_func
@@ -19,7 +21,7 @@ def main():
 
     # --------------------------------------------------------------
 
-    maze = Maze(100, 3500, 3, DFSStrategy(), crazy_value=0.005, start=(1, 1))
+    maze = Maze(50, 800, 5, DFSStrategy(), crazy_value=0.05, start=(1, 1))
 
     
     goal_for_algorithm = GOAL[0] if isinstance(GOAL, list) else GOAL
@@ -36,11 +38,11 @@ def main():
     w = MainWindow(base_grid, get_grid_func)
 
     # Timer de paredes dinámicas (cambia el laberinto cada X ms)
-    walls_timer = QTimer()
-    walls_timer.setInterval(5000) # = 10 segundos
-    walls_timer.timeout.connect(lambda: maze.mover_paredes())
-    walls_timer.start()
-    app._walls_timer = walls_timer  # type: ignore[attr-defined]
+    #walls_timer = QTimer()
+    #walls_timer.setInterval(5000) # = 10 segundos
+    #walls_timer.timeout.connect(lambda: maze.mover_paredes())
+    #walls_timer.start()
+    #app._walls_timer = walls_timer  # type: ignore[attr-defined]
 
     algorithms = {
         "A*": a_star,
@@ -63,9 +65,13 @@ def main():
     quit_shortcut = QShortcut(QKeySequence("Esc"), w)
     quit_shortcut.activated.connect(app.quit)
 
-    runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
+    player = MazePlayer(maze, runner, life_turns= 400)
+    game_runner = GameRunner(player)
+    game_runner.start()
+    #runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
     app.aboutToQuit.connect(runner.stop)
-    app.aboutToQuit.connect(walls_timer.stop)
+    app.aboutToQuit.connect(game_runner.stop)
+    #app.aboutToQuit.connect(walls_timer.stop)
 
     w.show()
     app.exec()
