@@ -3,9 +3,6 @@ from random import randint, random, choice
 from numpy import exp, sqrt, hypot
 import sys
 
-from utils.utils import valid_move 
-
-
 
 '''
 Calcula si es que un punto en el laberinto es una interseccion. La meta cuenta como intersección.
@@ -48,11 +45,12 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         '''
         Calcular el camino a partir de la secuencia de movimientos.
         '''
-        path = [start]
-        invalid_count = 0
+        path    = [start] 
+        visited = {start} 
 
-        row = start[0]
-        col = start[1]
+        invalid_count = 0
+        loop_count = 0
+
         current_pos = start      
 
         # mover agente 
@@ -81,8 +79,8 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                     invalid_count += 1
                     break
                 
-                # si choca con la pared
-                if maze[new_row][new_col] == 1:
+                # si el siguiente punto no es espacio libre
+                if maze[new_row][new_col] != 0:
                     invalid_count += 1
                     break
 
@@ -90,6 +88,27 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                 current_pos = new_pos
                 path.append(current_pos)
 
+                # Verificar si es un loop
+                if current_pos in visited:
+                    loop_count += 1
+
+                    # # Eliminar el loop cortando el path desde donde empezó el loop
+                    # loop_start_index = visited[current_pos]
+                    # path = path[:loop_start_index + 1]     # Mantener hasta el punto donde empezó el loop
+                    
+                    # # Actualizar visited removiendo las posiciones del loop eliminado
+                    # positions_to_remove = []
+                    # for pos, idx in visited.items():
+                    #     if idx > loop_start_index:
+                    #         positions_to_remove.add(pos)
+                    # for pos in positions_to_remove:
+                    #     del visited[pos]
+                    # # No agregar la posición actual ya que crearía el loop de nuevo
+                    break  # Salir del bucle while para pasar al siguiente movimiento               
+                
+                # Agregar a path y visited
+                path.append(current_pos)
+                visited.add(current_pos)
 
                 # si llega a una interseccion o esquina pasa al siguiente movimiento
                 if intersection_point(maze, new_pos, goal) == True:
@@ -99,11 +118,12 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
         individual.path = path
         individual.path_length = len(path)
         individual.invalid_steps = invalid_count
-        # individual.path.append(goal)
+        individual.loops = loop_count
+        # individual.path.add(goal)
 
 
 '''
-Representa un individuo de la poblacion del algoritmo genetico
+Representa un individuo de la poblacion del algoritmo genetico.
 '''
 
 class Individual:
@@ -114,24 +134,26 @@ class Individual:
         self.path_length = 0
         self.fitness = 0          # que tan apto es el individuo
         self.invalid_steps = 0    # cant. de veces que atraviesa paredes
+        self.loops = 0            # cant de veces que pasa por el mismo lugar
 
-    def print_info(self, show_path=False, maze=None, start=None, goal=None, population=None):
-        print(f"\033[96mChromosoma:\033[0m {self.chromosome}")
+    def print_info(self, show_path=False, show_chromosome=False):
+        
         print(f"\033[96mFitness:\033[0m {self.fitness:.3f}")
         print(f"\033[96mPasos Invalidos:\033[0m {self.invalid_steps}")
         print(f"\033[96mLargo del Camino:\033[0m {self.path_length}")
 
-    
+        if show_chromosome: 
+            print(f"\033[96mCromosoma:\033[0m {self.chromosome}")
         if show_path:
             print(f"\033[91mPath: {self.path}\033[0m")
 
 
 '''
-Clase para el 
+Clase para encontrar salidas de un laberinto con un algoritmo genetico.
 '''
 class Genetic_Algorithm:
 
-    def __init__(self, maze, start, goal, population_size=1000, p_individual_mutation=0.80, p_gene_mutation=0.04, minimum_fitness=0):
+    def __init__(self, maze, start, goal, population_size=1000, individual_mutation_p=0.80, p_gene_mutation=0.06, minimum_fitness=0):
         # info laberinto
         self.maze = maze
         self.columns = len(maze[0])
@@ -144,7 +166,7 @@ class Genetic_Algorithm:
         self.minimum_fitness = minimum_fitness
         self.population = self.generate_population()
         self.minimum_fitness = minimum_fitness
-        self.p_individual_mutation = p_individual_mutation       # probabilidad de mutar un individuo
+        self.individual_mutation_p = individual_mutation_p       # probabilidad de mutar un individuo
         self.p_gene_mutation = p_gene_mutation                   # probabilidad de mutar un gen 
 
 
@@ -205,17 +227,17 @@ class Genetic_Algorithm:
         population = []
         moves = ['U', 'D', 'R', 'L']
 
-        # Distancia mínima necesaria
-        min_distance = abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])
+        # Distancia mínima 
+        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])) * (sqrt(self.columns+self.rows)/10)
         
         for i in range(self.population_size):
             # Variar la longitud de los genes según diferentes estrategias
             if i < self.population_size * 0.3:  # 30% rutas cortas
-                gene_length = int(min_distance * 1.2)
-            elif i < self.population_size * 0.6:  # 30% rutas medianas
+                gene_length = int(min_distance)
+            elif i < self.population_size * 0.7:  # 40% rutas medianas
+                gene_length = int(min_distance * 1.5)
+            else:  # 30% rutas largas (para rodeos complejos)
                 gene_length = int(min_distance * 2.0)
-            else:  # 40% rutas largas (para rodeos complejos)
-                gene_length = int(min_distance * 3.0)
             
             chromosome = ""
             for _ in range(gene_length):
@@ -269,14 +291,14 @@ class Genetic_Algorithm:
 
         moves = ['U', 'D', 'R', 'L']
 
-        # p_individual_mutation  -> probabilidad de mutacion del individuo
+        # individual_mutation_p  -> probabilidad de mutacion del individuo
         # p_gene_mutation -> probabilidad de mutacion de cada gen
 
-        index = int(self.population_size*(1 - self.p_individual_mutation)) # indice del inicio de individuos a mutar.
+        index = int(self.population_size*(1 - self.individual_mutation_p)) # indice del inicio de individuos a mutar.
 
-        for ind in range(index, self.population_size):
+        for ind in range(0, self.population_size):
 
-            if random() <= self.p_individual_mutation:
+            if random() <= self.individual_mutation_p:
 
                 chromosome = self.population[ind].chromosome
                 
@@ -292,23 +314,19 @@ class Genetic_Algorithm:
     """
     def fitness_func(self):
        
-
-        # Pesos ajustados - suma total = 1 para mejor control
-        w_is = 0.4    # Penalización por pasos inválidos
-        w_d = 0.25    # Distancia a la meta (reducido)
-        w_l = 0.15    # Longitud del camino
-        w_prog = 0.15 # Progreso máximo alcanzado (NUEVO)
-        w_explore = 0.05 # Bonificación por exploración (NUEVO)
-
+        # Pesos
+        w_is = 0.38      # Penalización por pasos inválidos
+        w_d = 0.35      # Distancia a la meta (reducido)
+        w_l = -0.15       # Longitud del camino
+        w_prog = 0.15   # Progreso máximo alcanzado 
+        w_loop = 0.4    # Progreso máximo alcanzado 
+       
         # Distancia Manhattan total posible
         d_tot = abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])
 
-        # Obtener rangos para normalización robusta
-        invalid_steps = [ind.invalid_steps for ind in self.population]
+        # Obtener rangos para normalización 
         path_lengths = [ind.path_length for ind in self.population]
 
-        # Usar percentiles para normalización más robusta
-        Smax = max(invalid_steps) if invalid_steps else 1
         Lmax = max(path_lengths) if path_lengths else 1
         Lmin = min(path_lengths) if path_lengths else 0
 
@@ -317,56 +335,59 @@ class Genetic_Algorithm:
             d_goal = abs(self.goal[0] - final_pos[0]) + abs(self.goal[1] - final_pos[1]) # manhattan distance
             d_goal = sqrt((self.goal[0] - final_pos[0])**2 + abs(self.goal[1] - final_pos[1])**2) # manhattan distance
             
-            # 1. Componente de pasos inválidos (penalización exponencial suavizada)
-            f_is = 1.0 / (1.0 + ind.invalid_steps * 0.5)  # Penalización suave
+            # Cantidad de pasos inválidos (penalización exponencial suavizada)
+            f_is = 1.0 / (1.0 + ind.invalid_steps)  
+
+            # Cantidad de loops (penalización exponencial)
+            f_loop = 1.0 / (1.0 + ind.loops)  
             
-            # 2. Componente de distancia a la meta (más crítico cerca de la meta)
+            # Distancia a la meta (más crítico cerca de la meta)
             if d_goal == 0:  # Ha llegado a la meta
                 f_d = 1.0
             else:
                 # Penalización exponencial para distancias grandes
                 f_d = exp(-d_goal / max(d_tot, 1))
             
-            # 3. Componente de longitud del camino (normalización mejorada)
+            # Longitud del camino (normalización mejorada)
             if Lmax > Lmin:
                 f_l = 1.0 - ((ind.path_length - Lmin) / (Lmax - Lmin))
             else:
                 f_l = 1.0
 
-            # 4. NUEVO: Progreso máximo alcanzado durante el recorrido
+            # Progreso máximo alcanzado durante el recorrido
             best_distance_in_path = min(
                 abs(self.goal[0] - pos[0]) + abs(self.goal[1] - pos[1])
                 for pos in ind.path
             )
+
             f_prog = 1.0 - (best_distance_in_path / max(d_tot, 1))
             
-            # 5. NUEVO: Bonificación por exploración (diversidad de posiciones)
-            unique_positions = len(set(ind.path))
-            f_explore = min(unique_positions / len(ind.path), 1.0) if ind.path else 0
-
-            # Bonificación especial si llega a la meta 
+           
+            # Bonificación especial si llega a la meta con 0 pasos invalidos
             goal_bonus = 0
             if d_goal == 0 and ind.invalid_steps == 0:
-                goal_bonus = 5.0  # Gran bonificación por éxito completo
+                goal_bonus = 5.0  
             
             # Fitness final combinado
             ind.fitness = (w_is * f_is + 
                       w_d * f_d + 
                       w_l * f_l + 
+                      w_loop * f_loop +
                       w_prog * f_prog +
-                      w_explore * f_explore +
-                      goal_bonus)
+                      goal_bonus) * 100
             
-            # Aplicar penalización severa por muchos pasos inválidos
-            if ind.invalid_steps > 15:
-                ind.fitness *= 0.1  # Reducir fitness dramáticamente
+            
+            
 
     '''
     Funcion para ejecutar el algoritmo.
     '''        
-    def run(self, cant_generations=3000, on_step=None, should_stop=None):
+    def run(self, generation_n=3000, on_step=None, should_stop=None):
         
-        for i in range(cant_generations):
+        for i in range(generation_n):
+
+            if should_stop and should_stop():
+                return []
 
             # revisar el camino del individuo
             create_path(self.population, self.maze, self.start, self.goal)
@@ -379,30 +400,37 @@ class Genetic_Algorithm:
 
             # graficar e imprimir info del mejor individuo
             if on_step:
-                on_step([], [], self.population[0].path.copy())
+                last = self.population[0].path[-1]
+                on_step([], [last], self.population[0].path[:-1].copy())
 
-            if i % 100 == 0:
+            if i % 2== 0:
 
                 print('Generacion', i)
-                self.population[0].print_info(maze=self.maze, start=self.start, goal=self.goal, population=self.population, show_path=True)
+                self.population[0].print_info()
+                print('Largo Cromosoma:', len(self.population[0].chromosome))
                 print ('------------------------------')
               
             # revisar si algun individuo ha llegado a la meta
             for individual in self.population:
                 
                 # si un camino llega a la meta sin cruzar ninguna pared, se retorna el camino.
-                if individual.invalid_steps == 0 and self.goal in individual.path:       
+                if self.goal in individual.path:       
                     goal_index = individual.path.index(self.goal)
 
-                    print(f'\033[92mGeneracion {i}\033[0m')  # Green
+                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
                     print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+
                     individual.print_info(show_path=False)
-                    print(f'\033[90m{individual.path[:goal_index + 1]}\033[0m')
+                    
                     print('\033[90m------------------------------\033[0m')
                     print()
 
                     if on_step:
-                        on_step([], [], individual.path.copy())            
+                        try:
+                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                        except Exception as e:
+                            print(f"Error in final on_step callback: {e}")
+                         
                     
                     # Cortar el camino en el punto donde encuentra la meta.
                     return individual.path[:goal_index + 1] 
@@ -418,16 +446,28 @@ class Genetic_Algorithm:
         '''
         return None
 
+
 '''
 Funcion wrapper para llamar al algoritmo.
 '''
-def genetic_algorithm(maze, start, goal, on_step=None, should_stop=None):
+def genetic_algorithm(
+        maze, 
+        start, 
+        goal, 
+        population_size=500, 
+        generation_n=500, 
+        individual_mutation_p=0.80, 
+        on_step=None, 
+        should_stop=None
+        ) -> list:
+    
+    
 
-    ga = Genetic_Algorithm(maze, start, goal, population_size=1000)
-    path_solution = ga.run(cant_generations=1000, on_step=on_step)
+    ga = Genetic_Algorithm(maze, start, goal, population_size=population_size, individual_mutation_p=individual_mutation_p)
+    path_solution = ga.run(generation_n=generation_n, on_step=on_step, should_stop=should_stop)
 
     if not path_solution: 
         print('\033[91mCamino no encontrado.\033[0m')  # Red
-        print('Mejor Individuo:', ga.population[0].path[-1])
+        print('Mejor Individuo:', ga.population[0].chromosome)
 
     return path_solution

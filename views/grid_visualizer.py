@@ -1,7 +1,7 @@
 import numpy as np
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget, QPushButton, QSlider, QFrame, QHBoxLayout
 from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, Slot, Qt
 from PySide6.QtGui import QImage
 
 def maze_to_image(maze):
@@ -86,3 +86,4 @@ class MainWindow(QWidget):
         Actualiza la vista del laberinto.
         """
         self.maze_widget.set_grid(self.get_grid_func())
+
