@@ -3,10 +3,11 @@ from core.callback import make_get_grid_func
 from core.shared import SharedState
 from utils.utils import valid_move
 import random
-from maze.maze_generators import *
+from maze_generators import *
 from views.grid_visualizer import MainWindow
 import sys
-from PySide6.QtWidgets import QApplication
+import os
+import pickle
 
 class Maze:
 
@@ -90,18 +91,34 @@ class Maze:
     def isGoal(self,pos):
         return pos in self.goals
 
+def save_maze(name,maze ,subfolder = None):
+    carpeta = 'laberintos'
+
+    if not os.path.exists(carpeta):
+        os.makedirs(carpeta)
+
+    if subfolder:
+        if not os.path.exists(f'{carpeta}/{subfolder}'):
+            os.makedirs(f'{carpeta}/{subfolder}')
+        with open(f'{carpeta}/{subfolder}/{name}.pkl', 'wb') as f:
+            pickle.dump(maze,f)
+        return
+
+    with open(f'{carpeta}/{name}.pkl', 'wb') as f:
+        pickle.dump(maze, f)
+
+
+def load_maze(file):
+    if not os.path.exists(file):
+        return
+    with open(file, 'rb') as archivo:
+        maze = pickle.load(archivo)
+    return maze
+
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    # matriz de ejemplo
-    maze = Maze(30,370,3,DFSStrategy(),crazy_value = 0.5, start = (6,6))
-    print(maze.walls)
-    print(maze.goals)
-    matriz = maze.maze
-    print(maze.getGoal())
-
-    m = make_get_grid_func(maze.maze, SharedState(),maze.start,maze.goals)
-    ventana = MainWindow(matriz,m )
-    ventana.show()
-    sys.exit(app.exec())
+    maze = Maze(50, 800, 5, DFSStrategy(), crazy_value=0.05, start=(1, 1))
+    save_maze('maze',maze)
+    maze = Maze(100, 800, 5, DFSStrategy(), crazy_value=0.05, start=(1, 1))
+    maze = load_maze('laberintos/maze.pkl')
+    print(maze.maze.shape[0])
