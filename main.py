@@ -1,3 +1,4 @@
+import threading
 from maze.maze_generators import DFSStrategy
 from utils.config import MAZE, START, GOAL, ALGORITHM
 from core.shared import SharedState
@@ -55,6 +56,9 @@ def run_simulation(
         "IDDFS": iddfs, 
         "GA": ga
     }
+    
+    # Crear un stop event 
+    stop_event = threading.Event()
 
     runner = AlgorithmRunner(
         algorithm_func=algorithms[algorithm],
@@ -67,29 +71,34 @@ def run_simulation(
         interval=0.05 # Intervalo de 50 ms entre actualizaciones de la interfaz gráfica (20 fps)
     )
 
-    # Connect window close event to stop algorithm and timer
+    # Conectar la ventana con el algoritmo y timer para pararlos cuando se cierra
+    runner.stop_event = stop_event
+
     def on_window_close():
         print("Simulation window closing - stopping algorithm and timer")
-        runner.stop()
-        walls_timer.stop()
+        stop_event.set()  # 
+        
+        # Asegurar que corra en el hilo principal
+        QTimer.singleShot(0, lambda: runner.stop() if hasattr(runner, 'stop') else None)
+        QTimer.singleShot(0, lambda: walls_timer.stop())
     
-    # Override the closeEvent of the window
-    original_close_event = w.closeEvent
-
+    # Override el evento
     def close_event_handler(event):
         on_window_close()
-        if original_close_event:
-            original_close_event(event)
-        else:
-            event.accept()
+        event.accept()
     
     w.closeEvent = close_event_handler
     
-    # Start the algorithm
+    # Inciar algoritmo
     runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
 
     quit_shortcut = QShortcut(QKeySequence("Esc"), w)
-    quit_shortcut.activated.connect(QApplication.instance().quit)
+    quit_shortcut.activated.connect(lambda: (
+        stop_event.set(),
+        QTimer.singleShot(0, lambda: runner.stop() if hasattr(runner, 'stop') else None),
+        QTimer.singleShot(0, lambda: walls_timer.stop()),
+        QApplication.instance().quit()
+    ))
 
     w.show()
 
@@ -97,53 +106,58 @@ def run_simulation(
 
 def main():
     app = QApplication(sys.argv)
-    
-    # Create and show menu window
     menu = MenuWindow()
     
-    # Store references to simulation components
+    # Guardar referencias a la instancia de simulacion
     simulation_window = None
     runner = None
     walls_timer = None
     
-    # Function to start simulation from menu
+
     def start_simulation():
         nonlocal simulation_window, runner, walls_timer
         
         args = menu.simulation_args
         
-        # Close any existing simulation
+        # Parar y eliminar la info de la simulacion anterior 
         if simulation_window:
             simulation_window.close()
-        if runner:
-            runner.stop()
+        if runner and hasattr(runner, 'stop'):
+            QTimer.singleShot(0, runner.stop)
         if walls_timer:
-            walls_timer.stop()
+            QTimer.singleShot(0, walls_timer.stop)
         
-        # Start new simulation
-        simulation_window, runner, walls_timer = run_simulation(
-            args['algorithm'],
-            args['wall_n'],
-            args['goal_n'],
-            args['population_size'],
-            args['generation_n'],
-            args['individual_mutation_p']
-        )
+        # Iniciar nueva simulacion
+        try:
+            simulation_window, runner, walls_timer = run_simulation(
+                args['algorithm'],
+                args['wall_n'],
+                args['goal_n'],
+                args['crazy_val'],
+                (0, 0),
+                None,
+                args['population_size'],
+                args['generation_n'],
+                args['individual_mutation_p']
+            )
+        except Exception as e:
+            print(f"Error starting simulation: {e}")
 
     quit_shortcut = QShortcut(QKeySequence("Esc"), menu)
     quit_shortcut.activated.connect(app.quit)
     
-    # Connect the menu to start simulation
+    # Pasarle la funcion de simulacion a la ventana de menu, para que la corra
     menu.start_simulation = start_simulation
     
     menu.show()
     
-    # Clean up on exit
+    # Funcion para cerrar aplicacion
     def cleanup():
-        if runner:
-            runner.stop()
+        print('Cerrando aplicacion.')
+        if runner and hasattr(runner, 'stop'):
+            QTimer.singleShot(0, runner.stop)
         if walls_timer:
-            walls_timer.stop()
+            QTimer.singleShot(0, walls_timer.stop)
     
     app.aboutToQuit.connect(cleanup)
     

@@ -153,7 +153,7 @@ Clase para encontrar salidas de un laberinto con un algoritmo genetico.
 '''
 class Genetic_Algorithm:
 
-    def __init__(self, maze, start, goal, population_size=1000, p_individual_mutation=0.80, p_gene_mutation=0.06, minimum_fitness=0):
+    def __init__(self, maze, start, goal, population_size=1000, individual_mutation_p=0.80, p_gene_mutation=0.06, minimum_fitness=0):
         # info laberinto
         self.maze = maze
         self.columns = len(maze[0])
@@ -166,7 +166,7 @@ class Genetic_Algorithm:
         self.minimum_fitness = minimum_fitness
         self.population = self.generate_population()
         self.minimum_fitness = minimum_fitness
-        self.p_individual_mutation = p_individual_mutation       # probabilidad de mutar un individuo
+        self.individual_mutation_p = individual_mutation_p       # probabilidad de mutar un individuo
         self.p_gene_mutation = p_gene_mutation                   # probabilidad de mutar un gen 
 
 
@@ -228,15 +228,15 @@ class Genetic_Algorithm:
         moves = ['U', 'D', 'R', 'L']
 
         # Distancia mínima 
-        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1]))*(sqrt(self.rows * self.columns) / 25 )
+        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])) * (sqrt(self.columns+self.rows)/10)
         
         for i in range(self.population_size):
             # Variar la longitud de los genes según diferentes estrategias
             if i < self.population_size * 0.3:  # 30% rutas cortas
                 gene_length = int(min_distance)
-            elif i < self.population_size * 0.6:  # 30% rutas medianas
+            elif i < self.population_size * 0.7:  # 40% rutas medianas
                 gene_length = int(min_distance * 1.5)
-            else:  # 40% rutas largas (para rodeos complejos)
+            else:  # 30% rutas largas (para rodeos complejos)
                 gene_length = int(min_distance * 2.0)
             
             chromosome = ""
@@ -291,14 +291,14 @@ class Genetic_Algorithm:
 
         moves = ['U', 'D', 'R', 'L']
 
-        # p_individual_mutation  -> probabilidad de mutacion del individuo
+        # individual_mutation_p  -> probabilidad de mutacion del individuo
         # p_gene_mutation -> probabilidad de mutacion de cada gen
 
-        index = int(self.population_size*(1 - self.p_individual_mutation)) # indice del inicio de individuos a mutar.
+        index = int(self.population_size*(1 - self.individual_mutation_p)) # indice del inicio de individuos a mutar.
 
         for ind in range(0, self.population_size):
 
-            if random() <= self.p_individual_mutation:
+            if random() <= self.individual_mutation_p:
 
                 chromosome = self.population[ind].chromosome
                 
@@ -336,7 +336,7 @@ class Genetic_Algorithm:
             d_goal = sqrt((self.goal[0] - final_pos[0])**2 + abs(self.goal[1] - final_pos[1])**2) # manhattan distance
             
             # Cantidad de pasos inválidos (penalización exponencial suavizada)
-            f_is = 1.0 / (1.0 + ind.invalid_steps * 0.5)  
+            f_is = 1.0 / (1.0 + ind.invalid_steps)  
 
             # Cantidad de loops (penalización exponencial)
             f_loop = 1.0 / (1.0 + ind.loops)  
@@ -374,7 +374,7 @@ class Genetic_Algorithm:
                       w_l * f_l + 
                       w_loop * f_loop +
                       w_prog * f_prog +
-                      goal_bonus)
+                      goal_bonus) * 100
             
             
             
@@ -382,9 +382,9 @@ class Genetic_Algorithm:
     '''
     Funcion para ejecutar el algoritmo.
     '''        
-    def run(self, cant_generations=3000, on_step=None, should_stop=None):
+    def run(self, generation_n=3000, on_step=None, should_stop=None):
         
-        for i in range(cant_generations):
+        for i in range(generation_n):
 
             if should_stop and should_stop():
                 return []
@@ -426,7 +426,11 @@ class Genetic_Algorithm:
                     print()
 
                     if on_step:
-                        on_step([], [], individual.path.copy())            
+                        try:
+                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                        except Exception as e:
+                            print(f"Error in final on_step callback: {e}")
+                         
                     
                     # Cortar el camino en el punto donde encuentra la meta.
                     return individual.path[:goal_index + 1] 
@@ -443,14 +447,24 @@ class Genetic_Algorithm:
         return None
 
 
-
 '''
 Funcion wrapper para llamar al algoritmo.
 '''
-def genetic_algorithm(maze, start, goal, population_size=100, cant_generations=500, on_step=None, should_stop=None) -> list:
+def genetic_algorithm(
+        maze, 
+        start, 
+        goal, 
+        population_size=500, 
+        generation_n=500, 
+        individual_mutation_p=0.80, 
+        on_step=None, 
+        should_stop=None
+        ) -> list:
+    
+    
 
-    ga = Genetic_Algorithm(maze, start, goal, population_size=population_size)
-    path_solution = ga.run(cant_generations=cant_generations, on_step=on_step, should_stop=should_stop)
+    ga = Genetic_Algorithm(maze, start, goal, population_size=population_size, individual_mutation_p=individual_mutation_p)
+    path_solution = ga.run(generation_n=generation_n, on_step=on_step, should_stop=should_stop)
 
     if not path_solution: 
         print('\033[91mCamino no encontrado.\033[0m')  # Red

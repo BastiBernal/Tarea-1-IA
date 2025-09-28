@@ -34,7 +34,7 @@ class MazeSelectionScreen:
 
         self.sld_crazy_val = QSlider(Qt.Horizontal)
         self.sld_crazy_val.setMinimum(0)
-        self.sld_crazy_val.setMaximum(100)
+        self.sld_crazy_val.setMaximum(10)
         self.sld_crazy_val.setValue(self.simulation_args['crazy_val'])
         self.sld_crazy_val.valueChanged.connect(self.callbacks['update_crazy_value'])
         self.layout.addWidget(self.sld_crazy_val)
