@@ -227,17 +227,17 @@ class Genetic_Algorithm:
         population = []
         moves = ['U', 'D', 'R', 'L']
 
-        # Distancia mínima necesaria
-        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1]))*( sqrt(self.rows * self.columns) / 10)
+        # Distancia mínima 
+        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1]))*(sqrt(self.rows * self.columns) / 25 )
         
         for i in range(self.population_size):
             # Variar la longitud de los genes según diferentes estrategias
             if i < self.population_size * 0.3:  # 30% rutas cortas
-                gene_length = int(min_distance * 1.2)
+                gene_length = int(min_distance)
             elif i < self.population_size * 0.6:  # 30% rutas medianas
-                gene_length = int(min_distance * 2.0)
+                gene_length = int(min_distance * 1.5)
             else:  # 40% rutas largas (para rodeos complejos)
-                gene_length = int(min_distance * 3.0)
+                gene_length = int(min_distance * 2.0)
             
             chromosome = ""
             for _ in range(gene_length):
@@ -386,6 +386,9 @@ class Genetic_Algorithm:
         
         for i in range(cant_generations):
 
+            if should_stop and should_stop():
+                return []
+
             # revisar el camino del individuo
             create_path(self.population, self.maze, self.start, self.goal)
 
@@ -417,8 +420,8 @@ class Genetic_Algorithm:
                     print(f'\033[92mGeneracion {i}\033[0m')     # Green
                     print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
 
-                    individual.print_info()
-                    print(f'\033[91m{individual.path[:goal_index + 1]}\033[0m')
+                    individual.print_info(show_path=False)
+                    
                     print('\033[90m------------------------------\033[0m')
                     print()
 
@@ -444,13 +447,13 @@ class Genetic_Algorithm:
 '''
 Funcion wrapper para llamar al algoritmo.
 '''
-def genetic_algorithm(maze, start, goal, population_size=500, cant_generations=1000, on_step=None, should_stop=None) -> list:
+def genetic_algorithm(maze, start, goal, population_size=100, cant_generations=500, on_step=None, should_stop=None) -> list:
 
     ga = Genetic_Algorithm(maze, start, goal, population_size=population_size)
-    path_solution = ga.run(cant_generations=cant_generations, on_step=on_step)
+    path_solution = ga.run(cant_generations=cant_generations, on_step=on_step, should_stop=should_stop)
 
     if not path_solution: 
         print('\033[91mCamino no encontrado.\033[0m')  # Red
-        print('Mejor Individuo:', ga.population[0].path[-1])
+        print('Mejor Individuo:', ga.population[0].chromosome)
 
     return path_solution
