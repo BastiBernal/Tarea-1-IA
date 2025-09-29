@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QApplication, QLabel, QWidget, QVBoxLayout, QGraphicsOpacityEffect
 from PySide6.QtGui import QPixmap, QShowEvent
 from PySide6.QtCore import QPropertyAnimation, Qt, QEasingCurve
+from PySide6.QtMultimedia import QSoundEffect
+from PySide6.QtCore import QUrl
 from pathlib import Path
 import os
 
@@ -10,6 +12,11 @@ class DeadScreen(QWidget):
 
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet("background-color: rgba(0, 0, 0, 180);")
+
+        self.sfx = QSoundEffect(self)
+        wav_path = os.path.join(Path(__file__).parent.parent, 'assets', 'sounds', 'you_died.wav')
+        self.sfx.setSource(QUrl.fromLocalFile(wav_path))
+        self.sfx.setVolume(1.0)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -41,6 +48,11 @@ class DeadScreen(QWidget):
         if not self._animation_started:
             self._animation_started = True
             self.start_fade_in_animation()
+            try:
+                self.sfx.stop()
+            except Exception:
+                pass
+            self.sfx.play()
 
     def start_fade_in_animation(self):
         self.animation = QPropertyAnimation(self.opacity_effect, b"opacity", self)
