@@ -10,6 +10,26 @@ def reconstruct_path(current_node):
         current_node = current_node.parent
     return path[::-1]
 
+def eliminar_ciclos(secuencia):
+    """
+    Elimina ciclos de una secuencia de tuplas (x, y) que representan posiciones en una matriz.
+    Solo se permiten movimientos arriba, abajo, izquierda y derecha.
+    """
+    visitados = {}
+    resultado = []
+
+    for i, pos in enumerate(secuencia):
+        if pos in visitados:
+            # Se encontró un ciclo: eliminar desde la última vez que se vio hasta ahora
+            inicio_ciclo = visitados[pos]
+            resultado = resultado[:inicio_ciclo]
+            # Actualizar el diccionario de visitados
+            visitados = {p: idx for idx, p in enumerate(resultado)}
+        visitados[pos] = len(resultado)
+        resultado.append(pos)
+
+    return resultado
+
 def valid_move(maze, position):
     """
     Devuelve una lista de movimientos válidos desde la posición dada en el laberinto.
@@ -25,7 +45,7 @@ def valid_move(maze, position):
     return [
         (x + nx, y + ny) for nx, ny in possible_moves
         if 0 <= x + nx < rows and 0 <= y + ny < cols
-        and maze[x + nx, y + ny] == 0
+        and (maze[x + nx, y + ny] == 0 or maze[x + nx, y + ny] == 5)
     ]
 
 def get_maze(base_maze, visited=None, frontier=None, path=None, start=None, goals=None, agent=None, adventurer=None):

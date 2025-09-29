@@ -34,7 +34,7 @@ class Maze:
         self.frequenty_move = frequenty_move
 
         for meta in self.goals:
-            self.maze[meta] = 0
+            self.maze[meta] = 5
 
     def mover_paredes(self):
         crazy_value = self.crazy_value*100

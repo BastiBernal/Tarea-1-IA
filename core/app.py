@@ -143,7 +143,7 @@ class SimulationApp:
         def _on_victory():
             print("Victoria alcanzada")
 
-        player = MazePlayer(maze, runner, life_turns=400, on_game_over=_show_dead_screen, on_victory=_on_victory)
+        player = MazePlayer(maze, runner, life_turns=1000, on_game_over=_show_dead_screen, on_victory=_on_victory)
         game_runner = GameRunner(player)
         game_runner.start()
         #runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)

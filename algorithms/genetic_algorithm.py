@@ -3,6 +3,7 @@ from random import randint, random, choice
 from numpy import exp, sqrt, hypot
 import sys
 
+from utils.utils import eliminar_ciclos
 
 '''
 Calcula si es que un punto en el laberinto es una interseccion. La meta cuenta como intersección.
@@ -25,7 +26,7 @@ def intersection_point(maze, point, goal) -> bool:
    
    
     # la meta es un pto de interseccion, para que el algoritmo se detenga en su casilla
-    if point == goal:
+    if maze[point] == maze[goal]:
         return True
     
     # si es un pasillo no es punto de interseccion
@@ -80,7 +81,7 @@ def create_path(population, maze, start, goal, on_step=None) -> None:
                     break
                 
                 # si el siguiente punto no es espacio libre
-                if maze[new_row][new_col] != 0:
+                if maze[new_row][new_col] != 0 and maze[new_row][new_col] != 5:
                     invalid_count += 1
                     break
 
@@ -333,7 +334,7 @@ class Genetic_Algorithm:
         for ind in self.population:
             final_pos = ind.path[-1]
             d_goal = abs(self.goal[0] - final_pos[0]) + abs(self.goal[1] - final_pos[1]) # manhattan distance
-            d_goal = sqrt((self.goal[0] - final_pos[0])**2 + abs(self.goal[1] - final_pos[1])**2) # manhattan distance
+            d_goal = sqrt((self.goal[0] - final_pos[0])**2 + abs(self.goal[1] - final_pos[1])**2) # euclidian distance
             
             # Cantidad de pasos inválidos (penalización exponencial suavizada)
             f_is = 1.0 / (1.0 + ind.invalid_steps)  
@@ -412,28 +413,29 @@ class Genetic_Algorithm:
               
             # revisar si algun individuo ha llegado a la meta
             for individual in self.population:
-                
+                for pos in individual.path:
+                    if self.maze[pos] == self.maze[self.goal]:
                 # si un camino llega a la meta sin cruzar ninguna pared, se retorna el camino.
-                if self.goal in individual.path:       
-                    goal_index = individual.path.index(self.goal)
+                #if self.goal in individual.path:
+                        goal_index = individual.path.index(pos)
 
-                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+                        print(f'\033[92mGeneracion {i}\033[0m')     # Green
+                        print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
 
-                    individual.print_info(show_path=False)
-                    
-                    print('\033[90m------------------------------\033[0m')
-                    print()
+                        individual.print_info(show_path=False)
 
-                    if on_step:
-                        try:
-                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                        except Exception as e:
-                            print(f"Error in final on_step callback: {e}")
-                         
-                    
-                    # Cortar el camino en el punto donde encuentra la meta.
-                    return individual.path[:goal_index + 1] 
+                        print('\033[90m------------------------------\033[0m')
+                        print()
+
+                        if on_step:
+                            try:
+                                on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                            except Exception as e:
+                                print(f"Error in final on_step callback: {e}")
+
+
+                        # Cortar el camino en el punto donde encuentra la meta.
+                        return eliminar_ciclos(individual.path[:goal_index + 1])
 
             # cruzar y mutar los individuos para la siguiente generacion
 
