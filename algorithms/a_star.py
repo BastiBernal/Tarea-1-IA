@@ -9,7 +9,7 @@ def manhattan_distance(start, goal):
     """
     return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
 
-def a_star(maze, start, goal, on_step=None, should_stop=None):
+def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = False):
     """
     Implementación del algoritmo A* para encontrar el camino más corto en un laberinto.
     Args:
@@ -23,8 +23,8 @@ def a_star(maze, start, goal, on_step=None, should_stop=None):
     goal_node = AStarNode(goal)
 
     open_list = []
-    # Mantener un diccionario de nodos cerrados para optimizar búsquedas
-    closed_list = dict()
+    closed_list = dict()  # position -> best g
+    closed_nodes = dict() # position -> AStarNode
     # Usar un heap para la lista abierta para eficiencia
     heapq.heappush(open_list, start_node)
 
@@ -45,11 +45,43 @@ def a_star(maze, start, goal, on_step=None, should_stop=None):
 
         # Si ya visitamos este nodo con menor o igual costo, lo ignoramos
         if current_node.position in closed_list and current_node.g >= closed_list[current_node.position]:
-            continue
+            # Intentar replan si se vació la frontera tras descartar
+            if replan and not open_list:
+                reseeded = False
+                for pos, node in sorted(closed_nodes.items(), key=lambda kv: (kv[1].f, kv[1].g)):
+                    for move in valid_move(maze, pos):
+                        neighbor = AStarNode(move, node)
+                        neighbor.g = node.g + 1
+                        neighbor.h = manhattan_distance(neighbor.position, goal_node.position)
+                        neighbor.f = neighbor.g + neighbor.h
+
+                        if move in closed_list and neighbor.g >= closed_list[move]:
+                            continue
+                        worse_or_equal = False
+                        for open_node in open_list:
+                            if neighbor == open_node and neighbor.g >= open_node.g:
+                                worse_or_equal = True
+                                break
+                        if worse_or_equal:
+                            continue
+
+                        heapq.heappush(open_list, neighbor)
+                        frontier.add(move)
+                        reseeded = True
+
+                if on_step and reseeded:
+                    on_step(set(closed_list.keys()), [n.position for n in open_list], [])
+                if reseeded:
+                    continue  # seguir el bucle con la nueva frontera
+                else:
+                    break     # salir del while -> no hay camino
+            continue  # ya estaba peor o igual, pasar al siguiente
+
         closed_list[current_node.position] = current_node.g
+        closed_nodes[current_node.position] = current_node
 
         # Si llegamos al objetivo, reconstruimos y devolvemos el camino
-        if maze[*current_node.position] == 5:
+        if current_node == goal_node:
             return reconstruct_path(current_node)
 
         for move in valid_move(maze, current_node.position):
@@ -76,4 +108,37 @@ def a_star(maze, start, goal, on_step=None, should_stop=None):
             heapq.heappush(open_list, neighbor)
             frontier.add(move)
 
-    return []  # No hay camino
+        # Si tras expandir se vació la frontera, intentar replan
+        if replan and not open_list:
+            reseeded = False
+            for pos, node in sorted(closed_nodes.items(), key=lambda kv: (kv[1].f, kv[1].g)):
+                for move in valid_move(maze, pos):
+                    neighbor = AStarNode(move, node)
+                    neighbor.g = node.g + 1
+                    neighbor.h = manhattan_distance(neighbor.position, goal_node.position)
+                    neighbor.f = neighbor.g + neighbor.h
+
+                    if move in closed_list and neighbor.g >= closed_list[move]:
+                        continue
+
+                    worse_or_equal = False
+                    for open_node in open_list:
+                        if neighbor == open_node and neighbor.g >= open_node.g:
+                            worse_or_equal = True
+                            break
+                    if worse_or_equal:
+                        continue
+
+                    heapq.heappush(open_list, neighbor)
+                    frontier.add(move)
+                    reseeded = True
+
+            if on_step and reseeded:
+                on_step(set(closed_list.keys()), [n.position for n in open_list], [])
+
+            if reseeded:
+                continue
+            else:
+                break  # sin opciones, terminar
+
+    return []  # no hay camino

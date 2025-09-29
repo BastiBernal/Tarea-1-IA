@@ -25,8 +25,11 @@ def intersection_point(maze, point, goal) -> bool:
     S = maze[x + 1][y] == 1 if x < maze.shape[0] - 1 else True  # Borde inferior = pared
    
    
-    # la meta es un pto de interseccion, para que el algoritmo se detenga en su casilla
-    if maze[point] == maze[goal]:
+    # la meta real es un pto de interseccion; admitir una o varias metas (coordenadas)
+    if isinstance(goal, (list, set)):
+        if point in goal:
+            return True
+    elif point == goal:
         return True
     
     # si es un pasillo no es punto de interseccion
@@ -413,29 +416,34 @@ class Genetic_Algorithm:
               
             # revisar si algun individuo ha llegado a la meta
             for individual in self.population:
-                for pos in individual.path:
-                    if self.maze[pos] == self.maze[self.goal]:
-                # si un camino llega a la meta sin cruzar ninguna pared, se retorna el camino.
-                #if self.goal in individual.path:
-                        goal_index = individual.path.index(pos)
+                goal_index = None
+                if isinstance(self.goal, (list, set)):
+                    # Primera aparición de cualquier meta
+                    for idx, pos in enumerate(individual.path):
+                        if pos in self.goal:
+                            goal_index = idx
+                            break
+                else:
+                    if self.goal in individual.path:
+                        goal_index = individual.path.index(self.goal)
+                if goal_index is not None:
 
-                        print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                        print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
+                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
 
-                        individual.print_info(show_path=False)
+                    individual.print_info(show_path=False)
 
-                        print('\033[90m------------------------------\033[0m')
-                        print()
+                    print('\033[90m------------------------------\033[0m')
+                    print()
 
-                        if on_step:
-                            try:
-                                on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                            except Exception as e:
-                                print(f"Error in final on_step callback: {e}")
+                    if on_step:
+                        try:
+                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                        except Exception as e:
+                            print(f"Error in final on_step callback: {e}")
 
-
-                        # Cortar el camino en el punto donde encuentra la meta.
-                        return eliminar_ciclos(individual.path[:goal_index + 1])
+                    # Cortar el camino en el punto donde encuentra la meta.
+                    return eliminar_ciclos(individual.path[:goal_index + 1])
 
             # cruzar y mutar los individuos para la siguiente generacion
 
@@ -472,4 +480,4 @@ def genetic_algorithm(
         print('\033[91mCamino no encontrado.\033[0m')  # Red
         print('Mejor Individuo:', ga.population[0].chromosome)
 
-    return path_solution
+    return path_solution or []
