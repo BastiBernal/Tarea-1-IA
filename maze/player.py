@@ -3,12 +3,14 @@ import time
 
 class MazePlayer:
 
-    def __init__(self, maze, strategy: AlgorithmRunner, life_turns = 100, calculate_cost = 1):
+    def __init__(self, maze, strategy: AlgorithmRunner, life_turns=100, calculate_cost=1, on_game_over=None, on_victory=None):
         self.strategy = strategy
         self.maze = maze
         self.life_turns = life_turns
         self.calculate_cost = calculate_cost
         self.path = []
+        self.on_game_over = on_game_over
+        self.on_victory = on_victory
 
     def calcular_ruta(self):
         maze = self.maze.maze
@@ -20,6 +22,7 @@ class MazePlayer:
 
 
     def start_game(self):
+        won = False
 
         while self.life_turns > 0:
             if not self.path:
@@ -41,7 +44,21 @@ class MazePlayer:
                 if self.path and not self.maze.evaluar_meta(self.maze.player):
                     self.path = []
                 elif self.path:
-                    print("Ganaste!")
+                    won = True
                     break
-        print("Game over...")
+
+        if won:
+            print("Ganaste!")
+            if callable(self.on_victory):
+                try:
+                    self.on_victory()
+                except Exception:
+                    pass
+        else:
+            print("Game over...")
+            if callable(self.on_game_over):
+                try:
+                    self.on_game_over()
+                except Exception:
+                    pass
 

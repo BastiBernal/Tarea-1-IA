@@ -1,7 +1,7 @@
 # Para la aplicacion principal y la gestion de la simulacion
 import sys
 import threading
-from PySide6.QtCore import QTimer, QCoreApplication
+from PySide6.QtCore import QTimer, QCoreApplication, Qt
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication
 
@@ -137,8 +137,13 @@ class SimulationApp:
 
         w.closeEvent = close_event_handler
 
-        # Iniciar el algoritmo
-        player = MazePlayer(maze, runner, life_turns=400)
+        def _show_dead_screen():
+            w.trigger_dead.emit()
+
+        def _on_victory():
+            print("Victoria alcanzada")
+
+        player = MazePlayer(maze, runner, life_turns=400, on_game_over=_show_dead_screen, on_victory=_on_victory)
         game_runner = GameRunner(player)
         game_runner.start()
         #runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
@@ -152,6 +157,10 @@ class SimulationApp:
                 QCoreApplication.quit(),
             )
         )
+
+        # Atajo para cerrar la pantalla de muerte
+        debug_dead = QShortcut(QKeySequence("Ctrl+D"), w)
+        debug_dead.activated.connect(lambda: QTimer.singleShot(0, w.hide_dead_screen))
 
         w.show()
         return w, runner 
