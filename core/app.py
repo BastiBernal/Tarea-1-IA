@@ -1,7 +1,7 @@
 # Para la aplicacion principal y la gestion de la simulacion
 import sys
 import threading
-from PySide6.QtCore import QTimer, QCoreApplication, Qt
+from PySide6.QtCore import QTimer, QCoreApplication
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication
 
@@ -141,7 +141,7 @@ class SimulationApp:
             w.trigger_dead.emit()
 
         def _on_victory():
-            print("Victoria alcanzada")
+            w.trigger_win.emit()
 
         player = MazePlayer(maze, runner, life_turns=1000, on_game_over=_show_dead_screen, on_victory=_on_victory)
         game_runner = GameRunner(player)
