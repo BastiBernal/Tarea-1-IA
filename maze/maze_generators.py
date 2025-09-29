@@ -5,11 +5,12 @@ import random
 
 class MazeGenerator:
     @abstractmethod
-    def execute(self):
+    def execute(self,size,n_walls,start, n_metas, metas, walls):
         pass
 
 class DFSStrategy(MazeGenerator):
     def execute(self,size,n_walls,start, n_metas, metas, walls):
+        size +=2
         maze = np.ones((size,size),dtype=int)
         maze[0, :] = 6
         maze[-1, :] = 6

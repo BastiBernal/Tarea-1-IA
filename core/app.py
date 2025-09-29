@@ -11,11 +11,13 @@ from core.algorithm_factory import *
 # Core
 from core.algorithm_runner import AlgorithmRunner
 from core.callback import make_get_grid_func, make_on_step
+from core.game_runner import GameRunner
 from core.shared import SharedState
 
 # Laberinto
 from maze.maze import Maze
 from maze.maze_generators import DFSStrategy
+from maze.player import MazePlayer
 
 # Configuracion por defecto
 from utils.config import MAZE, START, GOAL
@@ -101,12 +103,6 @@ class SimulationApp:
 
         w = MainWindow(base_grid, get_grid_func)
 
-        # Temporizador para mover paredes dinamicamente
-        walls_timer = QTimer()
-        walls_timer.setInterval(5000)
-        walls_timer.timeout.connect(lambda: maze.mover_paredes())
-        walls_timer.start()
-
         algorithm_func = self._choose_algorithm(args)
 
         stop_event = threading.Event()
@@ -130,7 +126,7 @@ class SimulationApp:
             """
             stop_event.set()
             QTimer.singleShot(0, lambda: runner.stop() if hasattr(runner, "stop") else None)
-            QTimer.singleShot(0, lambda: walls_timer.stop())
+            #QTimer.singleShot(0, lambda: walls_timer.stop())
 
         def close_event_handler(event):
             """
@@ -142,20 +138,23 @@ class SimulationApp:
         w.closeEvent = close_event_handler
 
         # Iniciar el algoritmo
-        runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
+        player = MazePlayer(maze, runner, life_turns=400)
+        game_runner = GameRunner(player)
+        game_runner.start()
+        #runner.start(base_grid, START if not maze else maze.start, goal_for_algorithm)
 
         quit_shortcut = QShortcut(QKeySequence("Esc"), w)
         quit_shortcut.activated.connect(
             lambda: (
                 stop_event.set(),
                 QTimer.singleShot(0, lambda: runner.stop() if hasattr(runner, "stop") else None),
-                QTimer.singleShot(0, lambda: walls_timer.stop()),
+                #QTimer.singleShot(0, lambda: walls_timer.stop()),
                 QCoreApplication.quit(),
             )
         )
 
         w.show()
-        return w, runner, walls_timer
+        return w, runner 
 
     def start_simulation(self) -> None:
         # Cerrar cualquier simulación previa
@@ -167,7 +166,7 @@ class SimulationApp:
             QTimer.singleShot(0, self.walls_timer.stop)
 
         try:
-            self.simulation_window, self.runner, self.walls_timer = self._build_simulation(
+            self.simulation_window, self.runner  = self._build_simulation(
                 self.menu.simulation_args
             )
         except Exception as e:
