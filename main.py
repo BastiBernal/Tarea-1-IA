@@ -1,23 +1,30 @@
 from core.app import SimulationApp
 from experiments.experiment_runner import ExperimentApp
-from utils.utils import get_test_maze, get_test_maze_5x5, get_test_maze_10x10
+from maze.maze import Maze
+from maze.maze_generators import DFSStrategy
 from typing import List
 import numpy as np
+import random as rd
 
 if __name__ == "__main__":
     option = input("Elija una opción:\n1. Ejecutar Simulación\n2. Ejecutar Experimentos\nIngrese 1 o 2: ")
     if option == '1':
         SimulationApp().run()
     elif option == '2':
-        mazes: List[np.ndarray] = [
-            get_test_maze_5x5(),
-            get_test_maze_10x10(),
-            get_test_maze(),
-        ]
+        maze = Maze(
+            100,
+            int(5000),
+            int(5),
+            DFSStrategy(),
+            crazy_value=float(1.0),
+            start=(1, 1),
+        )
         app = ExperimentApp(
-            mazes=mazes,
+            mazes=[maze],
             runs_per_maze=5,
             max_time_s=10.0,
+            wall_movement=True,
+            movement_interval_ms=1
         )
         results = app.run_experiments()
         dataframe = app.get_results_df()
