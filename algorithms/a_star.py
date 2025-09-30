@@ -81,7 +81,7 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
         closed_nodes[current_node.position] = current_node
 
         # Si llegamos al objetivo, reconstruimos y devolvemos el camino
-        if current_node == goal_node:
+        if maze[current_node.position] == 5:
             return reconstruct_path(current_node)
 
         for move in valid_move(maze, current_node.position):

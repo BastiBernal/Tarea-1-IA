@@ -3,7 +3,7 @@ from core.callback import make_get_grid_func
 from core.shared import SharedState
 from utils.utils import valid_move
 import random
-from maze.maze_generators import *
+from .maze_generators import *
 from views.grid_visualizer import MainWindow
 import sys
 import os
@@ -117,8 +117,25 @@ def load_maze(file):
 
 
 if __name__ == "__main__":
-    maze = Maze(50, 800, 5, DFSStrategy(), crazy_value=0.05, start=(1, 1))
-    save_maze('maze',maze)
-    maze = Maze(100, 800, 5, DFSStrategy(), crazy_value=0.05, start=(1, 1))
-    maze = load_maze('laberintos/maze.pkl')
-    print(maze.maze.shape[0])
+    crazy_values = [0.01 , 0.3 , 0.5]
+    for value in crazy_values:
+        maze = Maze(50,1000,1,DFSStrategy(), crazy_value=value)
+        save_maze(f'crazy_var{int(value*100)}',maze, subfolder="Crazy_var")
+
+    sizes = [33, 67 , 100]
+
+    for size in sizes:
+        maze = Maze(size,int(size*size*0.35),1,DFSStrategy(), crazy_value=0.05)
+        save_maze(f'size_var{int(size*size)}',maze, subfolder="Size_var")
+
+    goals = [5, 10 , 20]
+
+    for goal in goals:
+        maze =  Maze(50,875,goal,DFSStrategy(), crazy_value=0.05)
+        save_maze(f'goal_var{goal}',maze, subfolder="Goal_var")
+
+    walls= [1250, 1000, 750]
+
+    for wall in walls:
+        maze = Maze(50, wall , 1 , DFSStrategy(), crazy_value=0.05)
+        save_maze(f'wall_var{wall}',maze, subfolder="Wall_var")
