@@ -140,9 +140,9 @@ class ExperimentApp:
             elif algorithm == "GA":
                 ga_fn = self._build_ga()
                 if _should_stop is None:
-                    path = ga_fn(base_grid, start, goal, None, None)
+                    path = ga_fn(base_grid, start, goal, None, None, None)
                 else:
-                    path = ga_fn(base_grid, start, goal, None, _should_stop)
+                    path = ga_fn(base_grid, start, goal, None, None, _should_stop)
             else:
                 raise ValueError(f"Algoritmo no soportado en ExperimentApp: {algorithm}. Solo 'A*' y 'GA'.")
         finally:
