@@ -1,7 +1,7 @@
 # Para la aplicacion principal y la gestion de la simulacion
 import sys
 import threading
-from PySide6.QtCore import QTimer, QCoreApplication
+from PySide6.QtCore import QTimer, QCoreApplication, QLoggingCategory
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QApplication
 
@@ -37,6 +37,7 @@ class SimulationApp:
 
     def __init__(self) -> None:
         self.app = QApplication(sys.argv)
+        QLoggingCategory.setFilterRules("qt.multimedia.ffmpeg=false") # Desactiva logs de QtMultimedia
         self.menu = MenuWindow()
 
         self.simulation_window = None
