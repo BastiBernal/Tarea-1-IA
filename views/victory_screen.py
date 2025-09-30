@@ -15,7 +15,7 @@ class VictoryScreen(QWidget):
 		wav_path = (Path(__file__).resolve().parents[1] / 'assets' / 'sounds' / 'victory.wav')
 		if wav_path.exists():
 			self.sfx.setSource(QUrl.fromLocalFile(str(wav_path)))
-		self.sfx.setVolume(1.0)
+		self.sfx.setVolume(0.4)
 
 		layout = QVBoxLayout(self)
 		layout.setContentsMargins(0, 0, 0, 0)

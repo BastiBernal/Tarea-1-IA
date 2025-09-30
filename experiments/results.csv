@@ -1,0 +1,7 @@
+algorithm,maze_size,walls,goals,crazy_value,time_ms,peak_memory_kb,solution_length,timeout_reached,run
+A*,30,3,5,0.0,1.478,13.078,13,False,0
+A*,30,3,5,0.0,1.315,11.352,13,False,1
+GA Fast,30,3,5,0.0,29612.98,337.855,-1,False,0
+GA Fast,30,3,5,0.0,27690.372,272.442,-1,False,1
+GA Optimal,30,3,5,0.0,29654.078,287.914,-1,False,0
+GA Optimal,30,3,5,0.0,38605.379,374.688,19,False,1

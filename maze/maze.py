@@ -32,6 +32,7 @@ class Maze:
         self.player = self.start
         self.turn_counter = 0
         self.frequenty_move = frequenty_move
+        self.size = size
 
         for meta in self.goals:
             self.maze[meta] = 5
@@ -73,6 +74,7 @@ class Maze:
             return True
         try:
             self.goals.remove(goal)
+            self.maze[goal] = 0
         finally:
             return False
 
@@ -117,7 +119,7 @@ def load_maze(file):
 
 
 if __name__ == "__main__":
-    crazy_values = [0.01 , 0.3 , 0.5]
+    crazy_values = [0.1 , 0.3 , 0.5]
     for value in crazy_values:
         maze = Maze(50,1000,1,DFSStrategy(), crazy_value=value)
         save_maze(f'crazy_var{int(value*100)}',maze, subfolder="Crazy_var")
@@ -137,5 +139,5 @@ if __name__ == "__main__":
     walls= [1250, 1000, 750]
 
     for wall in walls:
-        maze = Maze(50, wall , 1 , DFSStrategy(), crazy_value=0.05)
+        maze = Maze(50, wall , 1 , DFSStrategy(), crazy_value=0)
         save_maze(f'wall_var{wall}',maze, subfolder="Wall_var")

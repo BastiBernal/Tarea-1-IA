@@ -12,18 +12,19 @@ if __name__ == "__main__":
         SimulationApp().run()
     elif option == '2':
         maze = Maze(
-            100,
-            int(5000),
+            30,
+            int(3),
             int(5),
             DFSStrategy(),
-            crazy_value=float(1.0),
+            crazy_value=float(0.0),
             start=(1, 1),
         )
+        print(len(maze.goals))
         app = ExperimentApp(
             mazes=[maze],
-            runs_per_maze=5,
+            runs_per_maze=2,
             max_time_s=10.0,
-            wall_movement=True,
+            wall_movement=False,
             movement_interval_ms=1
         )
         results = app.run_experiments()

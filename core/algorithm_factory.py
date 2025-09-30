@@ -11,12 +11,13 @@ def make_ga_algorithm(
     p_gene_mutation: float = 0.06,
     minimum_fitness: float = 0.0,
     optimize: bool = False,
+    experimental: bool = False,
 ) -> Callable[[Any, Tuple[int, int], Tuple[int, int], Optional[Callable], Optional[Callable]], Optional[List[Tuple[int, int]]]]:
     """
     Retorna una función que ejecuta el algoritmo genético con los parámetros especificados.
     """
 
-    def _algo(maze, start, goal, optimize=False, on_step=None, should_stop=None):
+    def _algo(maze, start, goal, optimizer=optimize, on_step=None, should_stop=None):
         ga = Genetic_Algorithm(
             maze,
             start,
@@ -26,7 +27,7 @@ def make_ga_algorithm(
             p_gene_mutation=p_gene_mutation,
             minimum_fitness=int(minimum_fitness),
         )
-        return ga.run(generation_n=generation_n, optimize=optimize, on_step=on_step, should_stop=should_stop)
+        return ga.run(generation_n=generation_n, optimize=optimizer, on_step=on_step, should_stop=should_stop,experimental=experimental)
 
     return _algo
 

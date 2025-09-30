@@ -13,7 +13,7 @@ class MazePlayer:
         self.on_victory = on_victory
 
     def calcular_ruta(self):
-        maze = self.maze.maze
+        maze = self.maze
         start = self.maze.player
         goal = self.maze.getGoal(*start)
         self.strategy.run_algorithm(maze,start,goal)

@@ -21,7 +21,7 @@ class MenuWindow(QWidget):
             'population_size': 350,
             'generation_n': 100,
             'individual_mutation_p': 0.80,
-            'optimize': True
+            'optimize': False
         }
         def _noop_start():
             pass

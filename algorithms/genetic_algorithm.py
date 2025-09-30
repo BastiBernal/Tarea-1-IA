@@ -74,8 +74,8 @@ class Genetic_Algorithm:
     def __init__(self, maze, start, goal, population_size=1000, individual_mutation_p=0.80, p_gene_mutation=0.06, minimum_fitness=0):
         # info laberinto
         self.maze = maze
-        self.columns = len(maze[0])
-        self.rows = len(maze)
+        self.columns = len(maze.maze[0])
+        self.rows = len(maze.maze)
         self.start = start                                 # posicion de inicio
         self.goal = goal                                   # arreglo de salidas posibles
 
@@ -87,8 +87,8 @@ class Genetic_Algorithm:
         self.individual_mutation_p = individual_mutation_p       # probabilidad de mutar un individuo
         self.p_gene_mutation = p_gene_mutation                   # probabilidad de mutar un gen 
 
-        self.min_path = 0
-        self.max_path = 0
+        self.min_path = -1
+        self.max_path = -1
 
         
 
@@ -172,95 +172,140 @@ class Genetic_Algorithm:
             population.append(Individual(chromosome))
 
         return population
+    
     '''
     Genera el camino a partir de los genes del individuo. 
     '''
-    def create_path(self, maze, start, goal, on_step=None) -> None:
+    def create_path(self, individual, maze, start, goal, on_step=None) :
 
-        for individual in self.population:
+        '''
+        Calcular el camino a partir de la secuencia de movimientos.
+        '''
+        tuple_goal = isinstance(self.goal, (list, set))
+        goal_index = None # 
 
-            '''
-            Calcular el camino a partir de la secuencia de movimientos.
-            '''
-            path    = [self.start] 
-            visited = {self.start} 
 
-            invalid_count = 0
-            loop_count = 0
+        path    = [self.start] 
+        visited = {self.start} 
 
-            current_pos = self.start      
+        invalid_count = 0
+        loop_count = 0
 
-            # mover agente 
-            for move in individual.chromosome:
+        current_pos = self.start      
+        # mover agente 
+        for move in individual.chromosome:
+
+            # avanzar hasta llegar a una interseccion.
+            while(True):
+
+                new_row, new_col = current_pos
                 
-                # no contar la posicion actual como interseccion
+                if move == 'U':
+                    new_row -= 1
+                elif move == 'D':
+                    new_row += 1
+                elif move == 'L':
+                    new_col -= 1
+                elif move == 'R':
+                    new_col += 1
+                
+                new_pos = (new_row, new_col)
 
-                # avanzar hasta llegar a una interseccion.
-                while(True):
+                # Ver que el pto 2 este dentro de la grilla
+                if not (0 <= new_row < maze.shape[0] and 0 <= new_col < maze.shape[1]):
+                    invalid_count += 1
+                    break
+                
+                # si el siguiente punto no es espacio libre
+                if maze[new_row][new_col] != 0 and maze[new_row][new_col] != 5:
+                    invalid_count += 1
+                    break
 
-                    new_row, new_col = current_pos
-                    
-                    if move == 'U':
-                        new_row -= 1
-                    elif move == 'D':
-                        new_row += 1
-                    elif move == 'L':
-                        new_col -= 1
-                    elif move == 'R':
-                        new_col += 1
-                    
-                    new_pos = (new_row, new_col)
+                # guardar nueva posicion
+                current_pos = new_pos
 
-                    # Ver que el pto 2 este dentro de la grilla
-                    if not (0 <= new_row < maze.shape[0] and 0 <= new_col < maze.shape[1]):
-                        invalid_count += 1
+                # Verificar si es un loop
+                if current_pos in visited:
+                    loop_count += 1
+          
+                # añadir punto al camino
+                path.append(current_pos)
+                visited.add(current_pos)
+
+                # dejar de crear el camino si se encuentra una meta.
+                if tuple_goal:
+                    if current_pos in self.goal:
+                        goal_index = len(path) - 1
                         break
-                    
-                    # si el siguiente punto no es espacio libre
-                    if maze[new_row][new_col] != 0 and maze[new_row][new_col] != 5:
-                        invalid_count += 1
-                        break
-
-                    # guardar nueva posicion
-                    current_pos = new_pos
-                    path.append(current_pos)
-
-                    # Verificar si es un loop
-                    if current_pos in visited:
-                        loop_count += 1
-
-                        # # Eliminar el loop cortando el path desde donde empezó el loop
-                        # loop_start_index = visited[current_pos]
-                        # path = path[:loop_start_index + 1]     # Mantener hasta el punto donde empezó el loop
-                        
-                        # # Actualizar visited removiendo las posiciones del loop eliminado
-                        # positions_to_remove = []
-                        # for pos, idx in visited.items():
-                        #     if idx > loop_start_index:
-                        #         positions_to_remove.add(pos)
-                        # for pos in positions_to_remove:
-                        #     del visited[pos]
-                        # # No agregar la posición actual ya que crearía el loop de nuevo
-                        break  # Salir del bucle while para pasar al siguiente movimiento               
-                    
-                    # Agregar a path y visited
-                    path.append(current_pos)
-                    visited.add(current_pos)
-
-                    # si llega a una interseccion o esquina pasa al siguiente movimiento
-                    if intersection_point(maze, new_pos, goal) == True:
+                else:
+                    if self.maze.maze[current_pos] == 5:
+                        self.goal = current_pos
+                        goal_index = len(path) - 1
                         break
 
+                # si llega a una interseccion o esquina pasa al siguiente movimiento
+                if intersection_point(maze, new_pos, goal) == True:
+                    break
+            
+            # dejar de crear camino si se llega a meta
+            if goal_index:
+                break
+        
+        individual.path = path
+        individual.path_length = len(path)
+        individual.invalid_steps = invalid_count
+        individual.loops = loop_count
 
-            individual.path = path
-            individual.path_length = len(path)
-            individual.invalid_steps = invalid_count
-            individual.loops = loop_count
 
-            if individual.path_length < self.min_path:
-                self.min_path = individual.path_length
-            elif individual.path_length > self.max_path:
-                self.max_path = individual.path_length
+        if self.min_path == -1 or individual.path_length < self.min_path:
+            self.min_path = individual.path_length
+        elif self.max_path == -1  or  individual.path_length > self.max_path:
+            self.max_path = individual.path_length
+
+        return goal_index
+
+        
+
+    def verify_goal(self, individual, goal_index, on_step=None, experimental = False, gen = None):
+        
+        # revisar si algun individuo ha llegado a la meta
+        
+        # goal_index = None
+        # if isinstance(self.goal, (list, set)):
+        #     # Primera aparición de cualquier meta
+        #     for idx, pos in enumerate(individual.path):
+        #         if pos in self.goal:
+        #             goal_index = idx
+        #             return
+        # else:
+            
+        #     if self.maze.maze[pos] == 5:
+        #         self.goal = pos
+        #         goal_index = individual.path.index(pos)
+        #         return
+
+        if goal_index is not None:
+            if not experimental or self.maze.evaluar_meta(individual.path[goal_index]):
+                
+                print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+                individual.print_info(show_path=False)
+                print('\033[90m------------------------------\033[0m')
+                print()
+
+                if on_step:
+                    try:
+                        on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                    except Exception as e:
+                        print(f"Error in final on_step callback: {e}")
+
+                # Cortar el camino en el punto donde encuentra la meta.
+                return eliminar_ciclos(individual.path[:goal_index + 1])
+            else:
+                print(self.goal)
+                self.goal = self.maze.getGoal()
+                print(self.goal)
+
+        
 
 
     '''
@@ -301,8 +346,6 @@ class Genetic_Algorithm:
             if i >= self.population_size * 0.05:
                 parent_1.chromosome = self.mutation(parent_1.chromosome)
                 parent_2.chromosome = self.mutation(parent_2.chromosome)
-
-            
 
     ''' 
     Funcion para mutar individuo con cierta probabilidad. 
@@ -390,20 +433,66 @@ class Genetic_Algorithm:
                       w_loop * f_loop +
                       w_prog * f_prog +
                       goal_bonus) * 100
-            
+
+
 
     '''
     Funcion para ejecutar el algoritmo.
     '''        
-    def run(self, generation_n=3000, optimize=False, on_step=None, should_stop=None):
+    def run(self, generation_n=3000, optimize=False, on_step=None, should_stop=None, experimental=False):
         
         for i in range(generation_n):
 
             if should_stop and should_stop():
+                if optimize:
+                    for ind in self.population:
+                        goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
+                        if goal_index is not None:
+                            if not experimental or self.maze.evaluar_meta(ind.path[goal_index]):
+                                return eliminar_ciclos(ind.path[:goal_index + 1])
+                
                 return []
 
             # revisar el camino del individuo
-            self.create_path(self.maze, self.start, self.goal)
+            for ind in self.population:
+                goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
+
+                if optimize == False:
+                    path = self.verify_goal(ind, goal_index, on_step=on_step, experimental=experimental,gen= i)
+                   
+                    if path :
+                        print("Camino encontrado.")
+                        return path
+                    
+                if goal_index is not None and (not experimental or self.maze.evaluar_meta(ind.path[goal_index])):
+                
+                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+                    ind.print_info(show_path=False)
+                    print('\033[90m------------------------------\033[0m')
+                    print()
+
+                    if on_step:
+                        try:
+                            on_step(set(), set(), ind.path[:goal_index + 1].copy())
+                        except Exception as e:
+                            print(f"Error en ultima llamada de on_step: {e}")
+
+                    # Si no estamos optimizando, retornar inmediatamente
+                    if not optimize:
+                        print("Camino encontrado.")
+                        return eliminar_ciclos(ind.path[:goal_index + 1])
+                   
+                
+                elif goal_index is not None:
+                    print(self.goal)
+                    self.goal = self.maze.getGoal()
+                    # print(self.goal)
+                
+                        
+            else:
+                print(self.goal)
+                self.goal = self.maze.getGoal()
+                print(self.goal)
 
             # calcular su fitness
             self.fitness_func()
@@ -423,37 +512,7 @@ class Genetic_Algorithm:
                 print('Largo Cromosoma:', len(self.population[0].chromosome))
                 print ('------------------------------')
             
-            if optimize == False:
-                # revisar si algun individuo ha llegado a la meta
-                for individual in self.population:
-                    goal_index = None
-                    if isinstance(self.goal, (list, set)):
-                        # Primera aparición de cualquier meta
-                        for idx, pos in enumerate(individual.path):
-                            if pos in self.goal:
-                                goal_index = idx
-                                break
-                    else:
-                        if self.goal in individual.path:
-                            goal_index = individual.path.index(self.goal)
-                    if goal_index is not None:
-
-                        # print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                        # print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-
-                        # individual.print_info(show_path=False)
-
-                        # print('\033[90m------------------------------\033[0m')
-                        # print()
-
-                        if on_step:
-                            try:
-                                on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                            except Exception as e:
-                                print(f"Error in final on_step callback: {e}")
-
-                        # Cortar el camino en el punto donde encuentra la meta.
-                        return eliminar_ciclos(individual.path[:goal_index + 1])
+            
 
             # cruzar y mutar los individuos para la siguiente generacion
 
@@ -464,39 +523,17 @@ class Genetic_Algorithm:
         si no se encuentra el camino en las generaciones permitidas, 
         se retorna None.
         '''
-        if optimize == True:
-            for individual in self.population:
-                goal_index = None
-                if isinstance(self.goal, (list, set)):
-                    # Primera aparición de cualquier meta
-                    for idx, pos in enumerate(individual.path):
-                        if pos in self.goal:
-                            goal_index = idx
-                            break
-                else:
-                    if self.goal in individual.path:
-                        goal_index = individual.path.index(self.goal)
-                        
+        if optimize:
+            # Buscar la mejor solución encontrada
+            for ind in self.population:
+                goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
                 if goal_index is not None:
+                    if not experimental or self.maze.evaluar_meta(ind.path[goal_index]):
+                        return eliminar_ciclos(ind.path[:goal_index + 1])
+        
+        return []
+    
 
-                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-
-                    individual.print_info(show_path=False)
-
-                    print('\033[90m------------------------------\033[0m')
-                    print()
-
-                    if on_step:
-                        try:
-                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                        except Exception as e:
-                            print(f"Error in final on_step callback: {e}")
-
-                    # Cortar el camino en el punto donde encuentra la meta.
-                    return eliminar_ciclos(individual.path[:goal_index + 1])
-
-        return None
 
 
 '''
