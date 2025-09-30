@@ -121,7 +121,7 @@ def load_maze(file):
 if __name__ == "__main__":
     crazy_values = [0.1 , 0.3 , 0.5]
     for value in crazy_values:
-        maze = Maze(50,1000,1,DFSStrategy(), crazy_value=value)
+        maze = Maze(50,875,1,DFSStrategy(), crazy_value=value)
         save_maze(f'crazy_var{int(value*100)}',maze, subfolder="Crazy_var")
 
     sizes = [33, 67 , 100]

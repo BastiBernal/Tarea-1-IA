@@ -35,7 +35,6 @@ class MazePlayer:
             else:
                 for pos in self.path:
                     self.life_turns -= 1
-                    print(self.life_turns)
                     time.sleep(0.1)
                     if not self.maze.move(pos) and self.maze.player != pos:
                         self.path = []
