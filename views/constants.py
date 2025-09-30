@@ -4,4 +4,4 @@ class COLORES:
     dark_green = '71C0BB'
     yellow = 'E3EEB2'
 
-WALL_N = [3000, 4500, 4800]
+WALL_N = [3000, 4000, 4800]

@@ -16,11 +16,12 @@ class MenuWindow(QWidget):
             'crazy_val': 0.005,
             'maze_size': 100,
             'algorithm': '',
-            'wall_n': 4500,
+            'wall_n': 4000,
             'goal_n': 5,
-            'population_size': 200,
+            'population_size': 350,
             'generation_n': 100,
-            'individual_mutation_p': 0.80
+            'individual_mutation_p': 0.80,
+            'optimize': True
         }
         def _noop_start():
             pass

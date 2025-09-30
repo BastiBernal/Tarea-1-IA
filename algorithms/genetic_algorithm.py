@@ -386,7 +386,7 @@ class Genetic_Algorithm:
     '''
     Funcion para ejecutar el algoritmo.
     '''        
-    def run(self, generation_n=3000, on_step=None, should_stop=None):
+    def run(self, generation_n=3000, optimize=False, on_step=None, should_stop=None):
         
         for i in range(generation_n):
 
@@ -407,14 +407,55 @@ class Genetic_Algorithm:
                 last = self.population[0].path[-1]
                 on_step([], [last], self.population[0].path[:-1].copy())
 
-            if i % 2== 0:
+            if i % 10 == 0:
 
                 print('Generacion', i)
                 self.population[0].print_info()
                 print('Largo Cromosoma:', len(self.population[0].chromosome))
                 print ('------------------------------')
-              
-            # revisar si algun individuo ha llegado a la meta
+            
+            if optimize == False:
+                # revisar si algun individuo ha llegado a la meta
+                for individual in self.population:
+                    goal_index = None
+                    if isinstance(self.goal, (list, set)):
+                        # Primera aparición de cualquier meta
+                        for idx, pos in enumerate(individual.path):
+                            if pos in self.goal:
+                                goal_index = idx
+                                break
+                    else:
+                        if self.goal in individual.path:
+                            goal_index = individual.path.index(self.goal)
+                    if goal_index is not None:
+
+                        print(f'\033[92mGeneracion {i}\033[0m')     # Green
+                        print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+
+                        individual.print_info(show_path=False)
+
+                        print('\033[90m------------------------------\033[0m')
+                        print()
+
+                        if on_step:
+                            try:
+                                on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                            except Exception as e:
+                                print(f"Error in final on_step callback: {e}")
+
+                        # Cortar el camino en el punto donde encuentra la meta.
+                        return eliminar_ciclos(individual.path[:goal_index + 1])
+
+            # cruzar y mutar los individuos para la siguiente generacion
+
+            self.crossover()
+            self.mutation() 
+        
+        '''
+        si no se encuentra el camino en las generaciones permitidas, 
+        se retorna None.
+        '''
+        if optimize == True:
             for individual in self.population:
                 goal_index = None
                 if isinstance(self.goal, (list, set)):
@@ -426,6 +467,7 @@ class Genetic_Algorithm:
                 else:
                     if self.goal in individual.path:
                         goal_index = individual.path.index(self.goal)
+                        
                 if goal_index is not None:
 
                     print(f'\033[92mGeneracion {i}\033[0m')     # Green
@@ -445,15 +487,6 @@ class Genetic_Algorithm:
                     # Cortar el camino en el punto donde encuentra la meta.
                     return eliminar_ciclos(individual.path[:goal_index + 1])
 
-            # cruzar y mutar los individuos para la siguiente generacion
-
-            self.crossover()
-            self.mutation() 
-        
-        '''
-        si no se encuentra el camino en las generaciones permitidas, 
-        se retorna None.
-        '''
         return None
 
 
@@ -467,6 +500,7 @@ def genetic_algorithm(
         population_size=500, 
         generation_n=500, 
         individual_mutation_p=0.80, 
+        optimize=False,
         on_step=None, 
         should_stop=None
         ) -> list:
@@ -474,7 +508,7 @@ def genetic_algorithm(
     
 
     ga = Genetic_Algorithm(maze, start, goal, population_size=population_size, individual_mutation_p=individual_mutation_p)
-    path_solution = ga.run(generation_n=generation_n, on_step=on_step, should_stop=should_stop)
+    path_solution = ga.run(generation_n=generation_n, optimize=optimize, on_step=on_step, should_stop=should_stop)
 
     if not path_solution: 
         print('\033[91mCamino no encontrado.\033[0m')  # Red

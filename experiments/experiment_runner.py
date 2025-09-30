@@ -20,6 +20,7 @@ ALGORITHMS = ("A*", "GA")
 GA_POPULATION_SIZE = 300
 GA_GENERATION_N = 300
 GA_INDIVIDUAL_MUTATION_P = 0.80
+OPTIMIZE = True
 
 # Columnas del dataset de resultados
 FIELDNAMES = [
@@ -75,6 +76,7 @@ class ExperimentApp:
             population_size=GA_POPULATION_SIZE,
             generation_n=GA_GENERATION_N,
             individual_mutation_p=GA_INDIVIDUAL_MUTATION_P,
+            optimize=OPTIMIZE
         )
 
     def _run_single(self, *, maze: Any, algorithm: str) -> Dict[str, Any]:
