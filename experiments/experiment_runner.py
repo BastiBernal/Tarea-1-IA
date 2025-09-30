@@ -15,6 +15,9 @@ from algorithms.a_star import a_star
 # Para el dataframe
 import pandas as pd
 
+# Hilo del laberinto
+import threading
+
 # Configuración estática de algoritmos
 ALGORITHMS = ("A*", "GA")
 GA_POPULATION_SIZE = 300
@@ -31,8 +34,8 @@ FIELDNAMES = [
     "time_ms",
     "peak_memory_kb",
     "solution_length",
-    "run",
     "timeout_reached",
+    "run",
 ]
 
 
@@ -43,6 +46,8 @@ class ExperimentApp:
         runs_per_maze: int = 1,
         output_csv: str = "experiments/results.csv",
         max_time_s: Optional[float] = None,
+        wall_movement: Optional[bool] = False,
+        movement_interval_ms: int = 5,
     ) -> None:
         self.mazes = list(mazes)
         self.start_selector = self._default_start_selector
@@ -50,6 +55,8 @@ class ExperimentApp:
         self.runs_per_maze = runs_per_maze
         self.output_csv = os.path.join(os.getcwd(), output_csv)
         self.max_time_s = max_time_s
+        self.wall_movement = wall_movement
+        self.movement_interval_ms = int(movement_interval_ms)
         self.df: pd.DataFrame = pd.DataFrame(columns=FIELDNAMES)
 
     @staticmethod
@@ -85,6 +92,29 @@ class ExperimentApp:
         start = self.start_selector(maze)
         goal = self.goal_selector(maze, start)
 
+        dyn_stop: Optional[threading.Event] = None
+        dyn_thread: Optional[threading.Thread] = None
+        if self.wall_movement and hasattr(maze, "mover_paredes") and callable(getattr(maze, "mover_paredes")):
+            dyn_stop = threading.Event()
+
+            def _mutator_loop():
+                interval = max(0.0, float(self.movement_interval_ms) / 1000.0)
+                next_t = time.perf_counter() + interval
+                while not dyn_stop.is_set():
+                    now = time.perf_counter()
+                    sleep_s = max(0.0, next_t - now)
+                    dyn_stop.wait(timeout=sleep_s)
+                    if dyn_stop.is_set():
+                        break
+                    try:
+                        maze.mover_paredes()
+                    except Exception:
+                        pass
+                    next_t += interval
+
+            dyn_thread = threading.Thread(target=_mutator_loop, name="MazeMutator", daemon=True)
+            dyn_thread.start()
+
         # Medir tiempo y memoria
         tracemalloc.start()
         # Configurar timeout (opcional)
@@ -96,19 +126,33 @@ class ExperimentApp:
             _should_stop = None  # type: ignore
 
         t0 = time.perf_counter()
-        if algorithm == "A*":
-            if _should_stop is None:
-                path = a_star(base_grid, start, goal)
+        path = []
+        try:
+            if algorithm == "A*":
+                if _should_stop is None and self.wall_movement:
+                    path = a_star(base_grid, start, goal, replan=True)
+                elif _should_stop is None:
+                    path = a_star(base_grid, start, goal)
+                elif _should_stop is not None and self.wall_movement:
+                    path = a_star(base_grid, start, goal, replan=True, should_stop=_should_stop)
+                else:
+                    path = a_star(base_grid, start, goal, None, _should_stop)
+            elif algorithm == "GA":
+                ga_fn = self._build_ga()
+                if _should_stop is None:
+                    path = ga_fn(base_grid, start, goal, None, None)
+                else:
+                    path = ga_fn(base_grid, start, goal, None, _should_stop)
             else:
-                path = a_star(base_grid, start, goal, None, _should_stop)
-        elif algorithm == "GA":
-            ga_fn = self._build_ga()
-            if _should_stop is None:
-                path = ga_fn(base_grid, start, goal, None, None)
-            else:
-                path = ga_fn(base_grid, start, goal, None, _should_stop)
-        else:
-            raise ValueError(f"Algoritmo no soportado en ExperimentApp: {algorithm}. Solo 'A*' y 'GA'.")
+                raise ValueError(f"Algoritmo no soportado en ExperimentApp: {algorithm}. Solo 'A*' y 'GA'.")
+        finally:
+            if dyn_stop is not None:
+                try:
+                    dyn_stop.set()
+                    if dyn_thread is not None:
+                        dyn_thread.join(timeout=1.0)
+                except Exception:
+                    pass
         t1 = time.perf_counter()
         current, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
