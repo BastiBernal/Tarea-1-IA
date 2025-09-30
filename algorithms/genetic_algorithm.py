@@ -286,12 +286,6 @@ class Genetic_Algorithm:
 
         if goal_index is not None:
             if not experimental or self.maze.evaluar_meta(individual.path[goal_index]):
-                
-                print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-                individual.print_info(show_path=False)
-                print('\033[90m------------------------------\033[0m')
-                print()
-
                 if on_step:
                     try:
                         on_step(set(), set(), individual.path[:goal_index + 1].copy())
@@ -302,7 +296,7 @@ class Genetic_Algorithm:
                 return eliminar_ciclos(individual.path[:goal_index + 1])
             else:
                 print(self.goal)
-                self.goal = self.maze.getGoal()
+                self.goal = self.maze.getGoal(*individual.path[goal_index])
                 print(self.goal)
 
         
@@ -447,58 +441,38 @@ class Genetic_Algorithm:
                 if optimize:
                     for ind in self.population:
                         goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
-                        if goal_index is not None:
-                            if not experimental or self.maze.evaluar_meta(ind.path[goal_index]):
-                                return eliminar_ciclos(ind.path[:goal_index + 1])
-                
+
+                    self.fitness_func()
+                    self.population.sort(key=lambda ind: ind.fitness, reverse=True)
+                    for pos in self.population[0].path:
+                        if self.maze.maze[pos] == 5:
+                            self.goal = pos
+                            return self.verify_goal(self.population[0], self.population[0].path.index(pos), on_step=on_step, gen=i)
+
                 return []
 
             # revisar el camino del individuo
             for ind in self.population:
                 goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
 
-                if optimize == False:
-                    path = self.verify_goal(ind, goal_index, on_step=on_step, experimental=experimental,gen= i)
-                   
-                    if path :
-                        print("Camino encontrado.")
-                        return path
-                    
-                if goal_index is not None and (not experimental or self.maze.evaluar_meta(ind.path[goal_index])):
-                
-                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-                    ind.print_info(show_path=False)
-                    print('\033[90m------------------------------\033[0m')
-                    print()
-
-                    if on_step:
-                        try:
-                            on_step(set(), set(), ind.path[:goal_index + 1].copy())
-                        except Exception as e:
-                            print(f"Error en ultima llamada de on_step: {e}")
-
-                    # Si no estamos optimizando, retornar inmediatamente
-                    if not optimize:
-                        print("Camino encontrado.")
-                        return eliminar_ciclos(ind.path[:goal_index + 1])
-                   
-                
-                elif goal_index is not None:
-                    print(self.goal)
-                    self.goal = self.maze.getGoal()
-                    # print(self.goal)
-                
-                        
-            else:
-                print(self.goal)
-                self.goal = self.maze.getGoal()
-                print(self.goal)
 
             # calcular su fitness
             self.fitness_func()
             
             # seleccionar mejores individuos segun fitness dejandolos al inicio de la lista
             self.population.sort(key=lambda ind: ind.fitness, reverse=True)
+
+            for pos in self.population[0].path:
+                if self.maze.maze[pos]  == 5:
+                    self.goal = pos
+                    if not optimize:
+                        path = self.verify_goal(self.population[0], self.population[0].path.index(pos), on_step=on_step, experimental = experimental, gen=i)
+                        if path :
+                            print("Camino encontrado.")
+                            return path
+                    else:
+                        self.verify_goal(self.population[0], self.population[0].path.index(pos), on_step=on_step, experimental = experimental, gen=i)
+                        break
 
             # graficar e imprimir info del mejor individuo
             if on_step:
@@ -524,13 +498,17 @@ class Genetic_Algorithm:
         se retorna None.
         '''
         if optimize:
-            # Buscar la mejor solución encontrada
             for ind in self.population:
                 goal_index = self.create_path(ind, self.maze.maze, self.start, self.goal)
-                if goal_index is not None:
-                    if not experimental or self.maze.evaluar_meta(ind.path[goal_index]):
-                        return eliminar_ciclos(ind.path[:goal_index + 1])
-        
+
+            self.fitness_func()
+            self.population.sort(key=lambda ind: ind.fitness, reverse=True)
+            for pos in self.population[0].path:
+                if self.maze.maze[pos] == 5:
+                    self.goal = pos
+                    return self.verify_goal(self.population[0], self.population[0].path.index(pos), on_step=on_step,
+                                            gen=i)
+
         return []
     
 
