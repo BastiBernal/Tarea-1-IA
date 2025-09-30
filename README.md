@@ -2,6 +2,11 @@
 
 > **Nota:** Este proyecto fue desarrollado en Windows.
 
+Integrantes:
+- Andrés Chaparro 
+- Bastián Bernal 
+- Valeria Quiroga Carrere 
+
 ## Descripción
 
 ### Problema
