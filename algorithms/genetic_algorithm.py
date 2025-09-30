@@ -39,92 +39,6 @@ def intersection_point(maze, point, goal) -> bool:
     # el resto de combinaciones se cuentan como punto de interseccion
     return True
 
-'''
-Genera el camino a partir de los genes del individuo. 
-'''
-def create_path(population, maze, start, goal, on_step=None) -> None:
-
-    for individual in population:
-
-        '''
-        Calcular el camino a partir de la secuencia de movimientos.
-        '''
-        path    = [start] 
-        visited = {start} 
-
-        invalid_count = 0
-        loop_count = 0
-
-        current_pos = start      
-
-        # mover agente 
-        for move in individual.chromosome:
-            
-            # no contar la posicion actual como interseccion
-
-            # avanzar hasta llegar a una interseccion.
-            while(True):
-
-                new_row, new_col = current_pos
-                
-                if move == 'U':
-                    new_row -= 1
-                elif move == 'D':
-                    new_row += 1
-                elif move == 'L':
-                    new_col -= 1
-                elif move == 'R':
-                    new_col += 1
-                
-                new_pos = (new_row, new_col)
-
-                # Ver que el pto 2 este dentro de la grilla
-                if not (0 <= new_row < maze.shape[0] and 0 <= new_col < maze.shape[1]):
-                    invalid_count += 1
-                    break
-                
-                # si el siguiente punto no es espacio libre
-                if maze[new_row][new_col] != 0 and maze[new_row][new_col] != 5:
-                    invalid_count += 1
-                    break
-
-                # guardar nueva posicion
-                current_pos = new_pos
-                path.append(current_pos)
-
-                # Verificar si es un loop
-                if current_pos in visited:
-                    loop_count += 1
-
-                    # # Eliminar el loop cortando el path desde donde empezó el loop
-                    # loop_start_index = visited[current_pos]
-                    # path = path[:loop_start_index + 1]     # Mantener hasta el punto donde empezó el loop
-                    
-                    # # Actualizar visited removiendo las posiciones del loop eliminado
-                    # positions_to_remove = []
-                    # for pos, idx in visited.items():
-                    #     if idx > loop_start_index:
-                    #         positions_to_remove.add(pos)
-                    # for pos in positions_to_remove:
-                    #     del visited[pos]
-                    # # No agregar la posición actual ya que crearía el loop de nuevo
-                    break  # Salir del bucle while para pasar al siguiente movimiento               
-                
-                # Agregar a path y visited
-                path.append(current_pos)
-                visited.add(current_pos)
-
-                # si llega a una interseccion o esquina pasa al siguiente movimiento
-                if intersection_point(maze, new_pos, goal) == True:
-                    break
-
-
-        individual.path = path
-        individual.path_length = len(path)
-        individual.invalid_steps = invalid_count
-        individual.loops = loop_count
-        # individual.path.add(goal)
-
 
 '''
 Representa un individuo de la poblacion del algoritmo genetico.
@@ -172,6 +86,11 @@ class Genetic_Algorithm:
         self.minimum_fitness = minimum_fitness
         self.individual_mutation_p = individual_mutation_p       # probabilidad de mutar un individuo
         self.p_gene_mutation = p_gene_mutation                   # probabilidad de mutar un gen 
+
+        self.min_path = 0
+        self.max_path = 0
+
+        
 
 
     def adjust_chromosome(self, chromosome, flexibility_factor=0.3):
@@ -232,7 +151,7 @@ class Genetic_Algorithm:
         moves = ['U', 'D', 'R', 'L']
 
         # Distancia mínima 
-        min_distance = (abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])) * (sqrt(self.columns+self.rows)/10)
+        min_distance = sqrt(abs(self.goal[0] - self.start[0]) + abs(self.goal[1] - self.start[1])) * ((self.columns+self.rows)/10)
         
         for i in range(self.population_size):
             # Variar la longitud de los genes según diferentes estrategias
@@ -253,7 +172,96 @@ class Genetic_Algorithm:
             population.append(Individual(chromosome))
 
         return population
-        
+    '''
+    Genera el camino a partir de los genes del individuo. 
+    '''
+    def create_path(self, maze, start, goal, on_step=None) -> None:
+
+        for individual in self.population:
+
+            '''
+            Calcular el camino a partir de la secuencia de movimientos.
+            '''
+            path    = [self.start] 
+            visited = {self.start} 
+
+            invalid_count = 0
+            loop_count = 0
+
+            current_pos = self.start      
+
+            # mover agente 
+            for move in individual.chromosome:
+                
+                # no contar la posicion actual como interseccion
+
+                # avanzar hasta llegar a una interseccion.
+                while(True):
+
+                    new_row, new_col = current_pos
+                    
+                    if move == 'U':
+                        new_row -= 1
+                    elif move == 'D':
+                        new_row += 1
+                    elif move == 'L':
+                        new_col -= 1
+                    elif move == 'R':
+                        new_col += 1
+                    
+                    new_pos = (new_row, new_col)
+
+                    # Ver que el pto 2 este dentro de la grilla
+                    if not (0 <= new_row < maze.shape[0] and 0 <= new_col < maze.shape[1]):
+                        invalid_count += 1
+                        break
+                    
+                    # si el siguiente punto no es espacio libre
+                    if maze[new_row][new_col] != 0 and maze[new_row][new_col] != 5:
+                        invalid_count += 1
+                        break
+
+                    # guardar nueva posicion
+                    current_pos = new_pos
+                    path.append(current_pos)
+
+                    # Verificar si es un loop
+                    if current_pos in visited:
+                        loop_count += 1
+
+                        # # Eliminar el loop cortando el path desde donde empezó el loop
+                        # loop_start_index = visited[current_pos]
+                        # path = path[:loop_start_index + 1]     # Mantener hasta el punto donde empezó el loop
+                        
+                        # # Actualizar visited removiendo las posiciones del loop eliminado
+                        # positions_to_remove = []
+                        # for pos, idx in visited.items():
+                        #     if idx > loop_start_index:
+                        #         positions_to_remove.add(pos)
+                        # for pos in positions_to_remove:
+                        #     del visited[pos]
+                        # # No agregar la posición actual ya que crearía el loop de nuevo
+                        break  # Salir del bucle while para pasar al siguiente movimiento               
+                    
+                    # Agregar a path y visited
+                    path.append(current_pos)
+                    visited.add(current_pos)
+
+                    # si llega a una interseccion o esquina pasa al siguiente movimiento
+                    if intersection_point(maze, new_pos, goal) == True:
+                        break
+
+
+            individual.path = path
+            individual.path_length = len(path)
+            individual.invalid_steps = invalid_count
+            individual.loops = loop_count
+
+            if individual.path_length < self.min_path:
+                self.min_path = individual.path_length
+            elif individual.path_length > self.max_path:
+                self.max_path = individual.path_length
+
 
     '''
     Funcion para mezclar los genes de un cuarto de la poblacion con otro cuarto en un punto aleatorio, los mejores individuos. 
@@ -273,8 +281,9 @@ class Genetic_Algorithm:
                 parent_1.chromosome[:crossover_pt] + parent_2.chromosome[crossover_pt:]
             )
 
-            # self.population[i + offset].chromosome = self.adjust_chromosome(chromosome_1)
-            self.population[i + offset].chromosome = chromosome_1
+            # mutar cromosoma calculado
+            self.population[i + offset].chromosome = self.mutation(chromosome_1) 
+
 
             # usar un try en caso de que los genes no sean multiplos de 4.
             try:
@@ -282,36 +291,38 @@ class Genetic_Algorithm:
                     parent_2.chromosome[:crossover_pt] + parent_1.chromosome[crossover_pt:]
                 )
 
-                # self.population[i + offset + 1].chromosome = self.adjust_chromosome(chromosome_2)
-                self.population[i + offset + 1].chromosome = chromosome_2
+                self.population[i + offset + 1].chromosome = self.mutation(chromosome_2) 
+
             except:
                 pass
+                
+            # mutar a los padres e hijos excluyendo el mejor 5%
 
+            if i >= self.population_size * 0.05:
+                parent_1.chromosome = self.mutation(parent_1.chromosome)
+                parent_2.chromosome = self.mutation(parent_2.chromosome)
+
+            
 
     ''' 
     Funcion para mutar individuo con cierta probabilidad. 
     '''
-    def mutation(self):
+    def mutation(self, chromosome) -> str:
 
         moves = ['U', 'D', 'R', 'L']
 
         # individual_mutation_p  -> probabilidad de mutacion del individuo
         # p_gene_mutation -> probabilidad de mutacion de cada gen
+        
+        chrom = chromosome  
+        if random() <= self.individual_mutation_p:
+            
+            for m in range(len(chromosome)):
+                if random() <= self.p_gene_mutation: 
+                    # Reemplazar movimiento en la posicion m
+                    chrom = chrom[:m] + choice(moves) + chrom[m+1:]
 
-        index = int(self.population_size*(1 - self.individual_mutation_p)) # indice del inicio de individuos a mutar.
-
-        for ind in range(0, self.population_size):
-
-            if random() <= self.individual_mutation_p:
-
-                chromosome = self.population[ind].chromosome
-                
-                for m in range(len(self.population[ind].chromosome)):
-                    if random() <= self.p_gene_mutation: 
-                        # Reemplazar movimiento en la posicion g
-                        chromosome = chromosome[:m] + choice(moves) + chromosome[m+1:]
-
-                self.population[ind].chromosome = chromosome
+        return chrom
 
     """
     Función para calcular que tan bien adaptado esta el individuo.
@@ -331,8 +342,8 @@ class Genetic_Algorithm:
         # Obtener rangos para normalización 
         path_lengths = [ind.path_length for ind in self.population]
 
-        Lmax = max(path_lengths) if path_lengths else 1
-        Lmin = min(path_lengths) if path_lengths else 0
+        Lmax = self.max_path
+        Lmin = self.min_path
 
         for ind in self.population:
             final_pos = ind.path[-1]
@@ -380,8 +391,6 @@ class Genetic_Algorithm:
                       w_prog * f_prog +
                       goal_bonus) * 100
             
-            
-            
 
     '''
     Funcion para ejecutar el algoritmo.
@@ -394,7 +403,7 @@ class Genetic_Algorithm:
                 return []
 
             # revisar el camino del individuo
-            create_path(self.population, self.maze, self.start, self.goal)
+            self.create_path(self.maze, self.start, self.goal)
 
             # calcular su fitness
             self.fitness_func()
@@ -429,13 +438,13 @@ class Genetic_Algorithm:
                             goal_index = individual.path.index(self.goal)
                     if goal_index is not None:
 
-                        print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                        print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+                        # print(f'\033[92mGeneracion {i}\033[0m')     # Green
+                        # print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
 
-                        individual.print_info(show_path=False)
+                        # individual.print_info(show_path=False)
 
-                        print('\033[90m------------------------------\033[0m')
-                        print()
+                        # print('\033[90m------------------------------\033[0m')
+                        # print()
 
                         if on_step:
                             try:
@@ -448,8 +457,8 @@ class Genetic_Algorithm:
 
             # cruzar y mutar los individuos para la siguiente generacion
 
-            self.crossover()
-            self.mutation() 
+            self.crossover() # se llama a mutacion dentro
+           
         
         '''
         si no se encuentra el camino en las generaciones permitidas, 
