@@ -26,7 +26,7 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
     visited.add(current_node.position)
     if on_step:
         on_step(visited.copy(), set(), path.copy())
-    if current_node == goal_node:
+    if current_node == goal_node or maze[current_node.position] == 5:
         return reconstruct_path(current_node)
     if depth <= 0:
         # retroceder
@@ -54,7 +54,7 @@ def depth_limited_search(maze, current_node, goal_node, depth, visited, on_step=
         visited.add(neighbor.position)
         if on_step:
             on_step(visited.copy(), set(), path.copy())
-        if neighbor == goal_node:
+        if neighbor == goal_node or maze[neighbor.position] == 5:
             return reconstruct_path(neighbor)
         if d_left - 1 <= 0:
             # no podemos profundizar más; deshacer avance
