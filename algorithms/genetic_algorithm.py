@@ -160,8 +160,8 @@ class Genetic_Algorithm:
     def __init__(self, maze, start, goal, population_size=1000, individual_mutation_p=0.80, p_gene_mutation=0.06, minimum_fitness=0):
         # info laberinto
         self.maze = maze
-        self.columns = len(maze[0])
-        self.rows = len(maze)
+        self.columns = len(maze.maze[0])
+        self.rows = len(maze.maze)
         self.start = start                                 # posicion de inicio
         self.goal = goal                                   # arreglo de salidas posibles
 
@@ -379,22 +379,66 @@ class Genetic_Algorithm:
                       w_loop * f_loop +
                       w_prog * f_prog +
                       goal_bonus) * 100
-            
-            
-            
+
+
+    def verify_goal(self, on_step=None, experimental = False, gen = None):
+        i = gen
+        # revisar si algun individuo ha llegado a la meta
+        for individual in self.population:
+            goal_index = None
+            if isinstance(self.goal, (list, set)):
+                # Primera aparición de cualquier meta
+                for idx, pos in enumerate(individual.path):
+                    if pos in self.goal:
+                        goal_index = idx
+                        break
+            else:
+                for pos in individual.path:
+                    if self.maze.maze[pos] == 5:
+                        self.goal = pos
+                        goal_index = individual.path.index(pos)
+                        break
+
+            if goal_index is not None:
+                if not experimental or self.maze.evaluar_meta(individual.path[goal_index]):
+                    print(f'\033[92mGeneracion {i}\033[0m')  # Green
+                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
+
+                    individual.print_info(show_path=False)
+
+                    print('\033[90m------------------------------\033[0m')
+                    print()
+
+                    if on_step:
+                        try:
+                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
+                        except Exception as e:
+                            print(f"Error in final on_step callback: {e}")
+
+                    # Cortar el camino en el punto donde encuentra la meta.
+                    return eliminar_ciclos(individual.path[:goal_index + 1])
+                else:
+                    print(self.goal)
+                    self.goal = self.maze.getGoal()
+                    print(self.goal)
+
+        return []
 
     '''
     Funcion para ejecutar el algoritmo.
     '''        
-    def run(self, generation_n=3000, optimize=False, on_step=None, should_stop=None):
+    def run(self, generation_n=3000, optimize=False, on_step=None, should_stop=None, experimental=False):
         
         for i in range(generation_n):
 
             if should_stop and should_stop():
+                if optimize:
+                    return self.verify_goal(on_step=on_step,gen=i)
                 return []
 
+
             # revisar el camino del individuo
-            create_path(self.population, self.maze, self.start, self.goal)
+            create_path(self.population, self.maze.maze, self.start, self.goal)
 
             # calcular su fitness
             self.fitness_func()
@@ -415,36 +459,12 @@ class Genetic_Algorithm:
                 print ('------------------------------')
             
             if optimize == False:
-                # revisar si algun individuo ha llegado a la meta
-                for individual in self.population:
-                    goal_index = None
-                    if isinstance(self.goal, (list, set)):
-                        # Primera aparición de cualquier meta
-                        for idx, pos in enumerate(individual.path):
-                            if pos in self.goal:
-                                goal_index = idx
-                                break
-                    else:
-                        if self.goal in individual.path:
-                            goal_index = individual.path.index(self.goal)
-                    if goal_index is not None:
-
-                        print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                        print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-
-                        individual.print_info(show_path=False)
-
-                        print('\033[90m------------------------------\033[0m')
-                        print()
-
-                        if on_step:
-                            try:
-                                on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                            except Exception as e:
-                                print(f"Error in final on_step callback: {e}")
-
-                        # Cortar el camino en el punto donde encuentra la meta.
-                        return eliminar_ciclos(individual.path[:goal_index + 1])
+                path = self.verify_goal(on_step=on_step, experimental=experimental,gen= i)
+                if path :
+                    print("xaaaa")
+                    return path
+            else:
+                self.verify_goal(on_step=on_step, experimental=experimental,gen= i)
 
             # cruzar y mutar los individuos para la siguiente generacion
 
@@ -456,38 +476,9 @@ class Genetic_Algorithm:
         se retorna None.
         '''
         if optimize == True:
-            for individual in self.population:
-                goal_index = None
-                if isinstance(self.goal, (list, set)):
-                    # Primera aparición de cualquier meta
-                    for idx, pos in enumerate(individual.path):
-                        if pos in self.goal:
-                            goal_index = idx
-                            break
-                else:
-                    if self.goal in individual.path:
-                        goal_index = individual.path.index(self.goal)
-                        
-                if goal_index is not None:
+            return self.verify_goal(on_step=on_step,gen = generation_n)
 
-                    print(f'\033[92mGeneracion {i}\033[0m')     # Green
-                    print('\033[93mIndividuo exitoso:\033[0m')  # Yellow
-
-                    individual.print_info(show_path=False)
-
-                    print('\033[90m------------------------------\033[0m')
-                    print()
-
-                    if on_step:
-                        try:
-                            on_step(set(), set(), individual.path[:goal_index + 1].copy())
-                        except Exception as e:
-                            print(f"Error in final on_step callback: {e}")
-
-                    # Cortar el camino en el punto donde encuentra la meta.
-                    return eliminar_ciclos(individual.path[:goal_index + 1])
-
-        return None
+        return []
 
 
 '''

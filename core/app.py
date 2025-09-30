@@ -69,7 +69,8 @@ class SimulationApp:
                 population_size=int(args.get("population_size", 300)),
                 generation_n=int(args.get("generation_n", 300)),
                 individual_mutation_p=float(args.get("individual_mutation_p", 0.8)),
-                optimize=bool(args.get("optimize", False)),
+                optimize=True, # bool(args.get("optimize", False)),
+                experimental=False
             )
         if algo == "IDDFS":
             return make_iddfs_algorithm()

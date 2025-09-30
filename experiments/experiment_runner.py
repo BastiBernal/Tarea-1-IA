@@ -18,18 +18,21 @@ import pandas as pd
 # Hilo del laberinto
 import threading
 
+import copy
+
 # Configuración estática de algoritmos
-ALGORITHMS = ("A*", "GA")
+ALGORITHMS = ("A*", "GA Fast", "GA Optimal")
 GA_POPULATION_SIZE = 300
 GA_GENERATION_N = 300
 GA_INDIVIDUAL_MUTATION_P = 0.80
-OPTIMIZE = True
+#OPTIMIZE = False
 
 # Columnas del dataset de resultados
 FIELDNAMES = [
     "algorithm",
     "maze_size",
     "walls",
+    "goals",
     "crazy_value",
     "time_ms",
     "peak_memory_kb",
@@ -83,14 +86,15 @@ class ExperimentApp:
             population_size=GA_POPULATION_SIZE,
             generation_n=GA_GENERATION_N,
             individual_mutation_p=GA_INDIVIDUAL_MUTATION_P,
-            optimize=OPTIMIZE
+            experimental = True
         )
 
     def _run_single(self, *, maze: Any, algorithm: str) -> Dict[str, Any]:
         # Obtener start y goal desde el selector provisto
-        base_grid = maze if hasattr(maze, "shape") else getattr(maze, "maze", maze)
+        #maze = maze if hasattr(maze, "shape") else getattr(maze, "maze", maze)
         start = self.start_selector(maze)
         goal = self.goal_selector(maze, start)
+        goals = len(maze.goals)
 
         dyn_stop: Optional[threading.Event] = None
         dyn_thread: Optional[threading.Thread] = None
@@ -130,19 +134,25 @@ class ExperimentApp:
         try:
             if algorithm == "A*":
                 if _should_stop is None and self.wall_movement:
-                    path = a_star(base_grid, start, goal, replan=True)
+                    path = a_star(maze, start, goal, replan=True)
                 elif _should_stop is None:
-                    path = a_star(base_grid, start, goal)
+                    path = a_star(maze, start, goal)
                 elif _should_stop is not None and self.wall_movement:
-                    path = a_star(base_grid, start, goal, replan=True, should_stop=_should_stop)
+                    path = a_star(maze, start, goal, replan=True, should_stop=_should_stop)
                 else:
-                    path = a_star(base_grid, start, goal, None, _should_stop)
-            elif algorithm == "GA":
+                    path = a_star(maze, start, goal, None, _should_stop)
+            elif algorithm == "GA Fast":
                 ga_fn = self._build_ga()
                 if _should_stop is None:
-                    path = ga_fn(base_grid, start, goal, None, None, None)
+                    path = ga_fn(maze, start, goal, False, None, None)
                 else:
-                    path = ga_fn(base_grid, start, goal, None, None, _should_stop)
+                    path = ga_fn(maze, start, goal, False, None, _should_stop)
+            elif algorithm == "GA Optimal":
+                ga_fn = self._build_ga()
+                if _should_stop is None:
+                    path = ga_fn(maze, start, goal, True, None, None)
+                else:
+                    path = ga_fn(maze, start, goal, True, None, _should_stop)
             else:
                 raise ValueError(f"Algoritmo no soportado en ExperimentApp: {algorithm}. Solo 'A*' y 'GA'.")
         finally:
@@ -176,8 +186,9 @@ class ExperimentApp:
 
         return {
             "algorithm": algorithm,
-            "maze_size": int(getattr(base_grid, "shape", (0, 0))[0]) if hasattr(base_grid, "shape") else None,
+            "maze_size": int(getattr(maze, "shape", (0, 0))[0]) if hasattr(maze, "shape") else maze.size,
             "walls": walls_count,
+            "goals": goals,
             "crazy_value": crazy_val,
             "time_ms": round(time_ms, 3),
             "peak_memory_kb": round(peak_kb, 3),
@@ -191,7 +202,8 @@ class ExperimentApp:
         for maze in self.mazes:
             for algo in ALGORITHMS:
                 for run_idx in range(self.runs_per_maze):
-                    row = self._run_single(maze=maze, algorithm=algo)
+                    maze_copy = copy.deepcopy(maze)
+                    row = self._run_single(maze=maze_copy, algorithm=algo)
                     row["algorithm"] = algo
                     row["run"] = run_idx
                     results.append(row)

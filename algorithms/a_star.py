@@ -53,7 +53,7 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
     """
     Implementación del algoritmo A* para encontrar el camino más corto en un laberinto.
     Args:
-        maze (np.array): La cuadrícula del laberinto.
+        maze.maze (np.array): La cuadrícula del laberinto.
         start (tuple): La posición de inicio.
         goal (tuple): La posición objetivo.
         on_step (func, optional): Función de callback para cada paso.
@@ -88,7 +88,7 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
         if current_node.position in closed_list and current_node.g >= closed_list[current_node.position]:
             # Intentar replan si se vació la frontera tras descartar
             while replan and not open_list:
-                if reseed(open_list, closed_list, closed_nodes, maze, goal_node.position, on_step, frontier):
+                if reseed(open_list, closed_list, closed_nodes, maze.maze, goal_node.position, on_step, frontier):
                     continue  # seguirá al salir del while interno (open_list ya no está vacío)
                 if should_stop and should_stop():
                     return []
@@ -99,10 +99,14 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
         closed_nodes[current_node.position] = current_node
 
         # Si llegamos al objetivo, reconstruimos y devolvemos el camino
-        if maze[current_node.position] == 5:
+        if maze.maze[current_node.position] == 5 and not replan:
             return reconstruct_path(current_node)
+        elif maze.maze[current_node.position] == 5:
+            if maze.evaluar_meta(current_node.position):
+                return reconstruct_path(current_node)
 
-        for move in valid_move(maze, current_node.position):
+
+        for move in valid_move(maze.maze, current_node.position):
             if should_stop and should_stop():
                 return []
             neighbor = AStarNode(move, current_node)
@@ -128,7 +132,7 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
 
         # Si tras expandir se vació la frontera, intentar replan
         while replan and not open_list:
-            if reseed(open_list, closed_list, closed_nodes, maze, goal_node.position, on_step, frontier):
+            if reseed(open_list, closed_list, closed_nodes, maze.maze, goal_node.position, on_step, frontier):
                 continue
             # No hay opciones ahora mismo: esperar y volver a intentar (entorno dinámico)
             if should_stop and should_stop():
