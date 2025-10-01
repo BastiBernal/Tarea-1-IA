@@ -43,16 +43,40 @@ Este comando instalará automáticamente las siguientes librerías:
 
 ### Ejecutar la aplicación
 
-Una vez instaladas las dependencias, puedes ejecutar la aplicación con:
+Una vez instaladas las dependencias, puedes ejecutar la simulación con:
 
 ```bash
 python main.py
+```
+
+Si quieres ejecutar los experimentos:
+```bash
+python run_experiments.py
 ```
 
 ### Modos de ejecución
 
 Hay dos modos de ejecución que se escogen desde la terminal: 
  - la simulación, que cuenta con interfaz gráfica y deja modificar los parámetros. 
- - los experimentos, que corren una serie de tests con parámetros predeterminados para evaluar el desempeño de los algoritmos. Los resultados son guardados en results.txt.
+ - los experimentos, que corren una serie de tests con parámetros predeterminados para evaluar el desempeño de los algoritmos. Los resultados son guardados en la carpeta results.
 
-<img src="parametros.png" alt="Parámetros de configuración" width="400">
+### Simulación
+Estas son las interfaces dentro de la simulación.
+#### Pantalla Principal
+![alt text](assets/img/app_0.png)
+
+#### Ajustes del laberinto
+![alt text](assets/img/app_1.png)
+
+#### Selección de algoritmo
+![alt text](assets/img/app_2.png)
+
+#### Selección de parámetros 
+![alt text](assets/img/app_3.png)
+##### (Solo si se selecciona el algoritmo genérico)
+
+#### Ejecución
+![alt text](assets/img/app_4.png)
+
+#### Simulación
+![alt text](assets/img/app_5.png)
