@@ -104,6 +104,9 @@ def a_star(maze, start, goal, on_step=None, should_stop=None, replan: bool = Fal
         elif maze.maze[current_node.position] == 5:
             if maze.evaluar_meta(current_node.position):
                 return reconstruct_path(current_node)
+            else:
+                #goal_node = AStarNode(maze.getGoal())
+                return reconstruct_path(current_node) + a_star(maze, current_node.position, maze.getGoal(), on_step, should_stop, replan)
 
 
         for move in valid_move(maze.maze, current_node.position):
