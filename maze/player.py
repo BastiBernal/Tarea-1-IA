@@ -4,6 +4,12 @@ import time
 class MazePlayer:
 
     def __init__(self, maze, strategy: AlgorithmRunner, life_turns=100, calculate_cost=1, on_game_over=None, on_victory=None):
+        """
+        maze: Referencia al objeto laberinto
+        strategy: Algoritmo que va ejecutar para calcular su camino
+        life_turns: Numero de turnos que tiene antes de morir
+        calculate_cost= Numero de turnos que pierde por calcular el camino
+        """
         self.strategy = strategy
         self.maze = maze
         self.life_turns = life_turns
@@ -23,8 +29,9 @@ class MazePlayer:
 
     def start_game(self):
         won = False
-
+        #Mientras siga con vida
         while self.life_turns > 0:
+            #Calcula ruta
             if not self.path:
                 self.calcular_ruta()
                 self.life_turns -= self.calculate_cost
@@ -32,6 +39,10 @@ class MazePlayer:
                     self.life_turns = self.life_turns - self.maze.frequenty_move + self.maze.turn_counter
                     self.maze.turns = 0
                     self.maze.mover_paredes()
+            #Moverse por la ruta hasta que algo no concuerde
+            #Como mecanica el jugador puede sobrevivir brevemente con vida negativa
+            #si es que esta caminando a una meta, en caso de ser la real sobrevive
+            #Si es interrumpido o no era real se acaba su viaje
             else:
                 for pos in self.path:
                     self.life_turns -= 1

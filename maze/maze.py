@@ -53,6 +53,9 @@ class Maze:
                     self.maze[self.walls[i]] = 1
 
     def getGoal(self,x =  None,y = None):
+        """
+        Metodo para obtener la meta mas cercana dado un punto
+        """
         if x is None:
             x = self.start[0]
         if y is None:
@@ -70,6 +73,10 @@ class Maze:
         return abs(x1 - x2) + abs(y1 - y2)
 
     def evaluar_meta(self, goal):
+        """
+        Retorna verdadero si el punto dado es la meta real, en otro caso
+        retorna false y quita la meta falsa si es que lo era
+        """
         if goal == self.real_goal:
             return True
         try:
@@ -79,6 +86,10 @@ class Maze:
             return False
 
     def move(self, pos ):
+        """
+        Función para mover al jugador dentro del laberinto
+        verifica que el movimiento es posible
+        """
         self.turn_counter += 1
         if self.turn_counter == self.frequenty_move:
             self.mover_paredes()
